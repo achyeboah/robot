@@ -1,10 +1,3 @@
-/*
- * defs.h
- *
- *  Created on: 23 Jul 2020
- *      Author: sam
- */
-
 #ifndef DEFS_H_
 #define DEFS_H_
 
