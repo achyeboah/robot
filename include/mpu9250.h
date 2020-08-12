@@ -7,40 +7,41 @@ namespace samsRobot {
 
 /* From register map (RM-MPU-9250 rev 1.6, Sep 2013)
  * of the TDK MPU9250 device (Rev 1.6) */
-#define DEV_ID	0x71	// device ID (register 75 responds WHO_AM_I).
-#define DEV_NUM_REG 0x7E // total number of available registers (126d). not all can be accessed.
+#define MPU9250_ADDR_WHO_AM_I 0x75 // address on device for reading device address
+#define MPU9250_DEV_NUM_REG 0x7E // total number of available registers (126d). not all can be accessed.
 
-#define CONFIG_DLPF_CFG 0x02	// see device register map. corresponds to approx 100hz
-#define PWR_MGMT_1_CLK_SRC 0x01	// see device register map. corresponds to x gyro
+#define MPU9250_CONFIG_DLPF_CFG 0x02	// see device register map. corresponds to approx 100hz
+#define MPU9250_PWR_MGMT_1_CLK_SRC 0x01	// see device register map. corresponds to x gyro
 
-#define ADDR_SMPLRT_DIV	0x19	// sample rate divider
-#define ADDR_CONFIG	0x1A	// device filter configuration
-#define ADDR_GYRO_CONFIG 0x1B // gyroscope configuration
-#define ADDR_ACCEL_CONFIG 0x1C // accelerometer configuration
-#define ADDR_INT_PIN_CFG	0x37	// interrupt pin configuration
-#define ADDR_INT_ENABLE	0x38	//
-#define ADDR_USER_CNTRL	0x6A	// user control
-#define ADDR_PWR_MGMT_1	0x6B	// configure ref clock source
+#define MPU9250_ADDR_SMPLRT_DIV	0x19	// sample rate divider
+#define MPU9250_ADDR_CONFIG	0x1A	// device filter configuration
+#define MPU9250_ADDR_GYRO_CONFIG 0x1B // gyroscope configuration
+#define MPU9250_ADDR_ACCEL_CONFIG 0x1C // accelerometer configuration
+#define MPU9250_ADDR_ACCEL_CONFIG2 0x1D // second configuration register
+#define MPU9250_ADDR_INT_PIN_CFG	0x37	// interrupt pin configuration
+#define MPU9250_ADDR_INT_ENABLE	0x38	//
+#define MPU9250_ADDR_USER_CNTRL	0x6A	// user control
+#define MPU9250_ADDR_PWR_MGMT_1	0x6B	// configure ref clock source
 
-#define ADDR_ACCEL_DATA_X_H	0x3B
-#define ADDR_ACCEL_DATA_X_L	0x3C
-#define ADDR_ACCEL_DATA_Y_H	0x3D
-#define ADDR_ACCEL_DATA_Y_L	0x3E
-#define ADDR_ACCEL_DATA_Z_H	0x3F
-#define ADDR_ACCEL_DATA_Z_L	0x40
+#define MPU9250_ADDR_ACCEL_DATA_X_H	0x3B
+#define MPU9250_ADDR_ACCEL_DATA_X_L	0x3C
+#define MPU9250_ADDR_ACCEL_DATA_Y_H	0x3D
+#define MPU9250_ADDR_ACCEL_DATA_Y_L	0x3E
+#define MPU9250_ADDR_ACCEL_DATA_Z_H	0x3F
+#define MPU9250_ADDR_ACCEL_DATA_Z_L	0x40
 
-#define ADDR_TEMP_DATA_H 0x41
-#define ADDR_TEMP_DATA_L 0x42
+#define MPU9250_ADDR_TEMP_DATA_H 0x41
+#define MPU9250_ADDR_TEMP_DATA_L 0x42
 
-#define ADDR_GYRO_DATA_X_H	0x43
-#define ADDR_GYRO_DATA_X_L	0x44
-#define ADDR_GYRO_DATA_Y_H	0x45
-#define ADDR_GYRO_DATA_Y_L	0x46
-#define ADDR_GYRO_DATA_Z_H	0x47
-#define ADDR_GYRO_DATA_Z_L	0x48
+#define MPU9250_ADDR_GYRO_DATA_X_H	0x43
+#define MPU9250_ADDR_GYRO_DATA_X_L	0x44
+#define MPU9250_ADDR_GYRO_DATA_Y_H	0x45
+#define MPU9250_ADDR_GYRO_DATA_Y_L	0x46
+#define MPU9250_ADDR_GYRO_DATA_Z_H	0x47
+#define MPU9250_ADDR_GYRO_DATA_Z_L	0x48
 
-#define TEMP_SENS 340 // 340 LSB/degC
-#define TEMP_OFFSET 36.53 // datasheet says -521 at 31degC,
+#define MPU9250_TEMP_SENS 340 // 340 LSB/degC
+#define MPU9250_TEMP_OFFSET 36.53 // datasheet says -521 at 31degC,
 	/* class mpu9250. specific class for the mpu9250 accel/gyro on i2c.
 	 * protected inheritance to protect public parent methods
 	 */
@@ -117,6 +118,6 @@ namespace samsRobot {
 		virtual ~mpu9250();
 
 	};
-}
+} //namespace
 
 #endif /* MPU9250 */

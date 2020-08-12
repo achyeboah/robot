@@ -1,8 +1,7 @@
 #ifndef DCMOTOR_H
 #define DCMOTOR_H
 
-//forward declare GPIO class
-class GPIO;
+#include "GPIO.h"
 
 namespace samsRobot{
 	class dcmotor{

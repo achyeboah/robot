@@ -1,11 +1,5 @@
-/*
- * i2cdev.cpp
- *
- *  Created on: 19 Jul 2020
- *  Author: sam
- */
-
 #include "i2cdev.h"
+
 #include <iostream>
 #include <sstream>
 #include <fcntl.h>

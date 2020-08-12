@@ -1,5 +1,5 @@
-
 #include "mpu9250.h"
+
 #include <iostream>
 #include <iomanip>
 #include <unistd.h>
@@ -45,43 +45,46 @@ namespace samsRobot {
 	void mpu9250::init(){
 		if (this->enable_dlpf == true){
 			// low pass filtered to approx 94hz bandwidth (close enough to 100hz)
-			// this also makes sampling freq for both accel and gyro 1khz
-			this->writeRegister(ADDR_CONFIG, CONFIG_DLPF_CFG);
+			// this also makes sampling freq for temperature and gyro 1khz
+			this->writeRegister(MPU9250_ADDR_CONFIG, MPU9250_CONFIG_DLPF_CFG);
+			// set accel dlpf
+			this->writeRegister(MPU9250_ADDR_ACCEL_CONFIG2, (unsigned char)2);
 		}
 		// use a gyro as clock ref instead of internal oscillator
-		this->writeRegister(ADDR_PWR_MGMT_1, PWR_MGMT_1_CLK_SRC);
+		this->writeRegister(MPU9250_ADDR_PWR_MGMT_1, MPU9250_PWR_MGMT_1_CLK_SRC);
 		// set gyro range
-		this->writeRegister(ADDR_GYRO_CONFIG, (unsigned char)gyro_range << 3);
+		this->writeRegister(MPU9250_ADDR_GYRO_CONFIG, (unsigned char)gyro_range << 3);
 		// set accel range
-		this->writeRegister(ADDR_ACCEL_CONFIG, (unsigned char)accel_range << 3);
+		this->writeRegister(MPU9250_ADDR_ACCEL_CONFIG, (unsigned char)accel_range << 3);
 		// enable interrupts when data is ready
-		this->writeRegister(ADDR_INT_ENABLE, 0x01);
+		this->writeRegister(MPU9250_ADDR_INT_ENABLE, 0x01);
 	}
 
 	/* read the sensor values. checks device can be correctly read,
 	 * then read in up to date values, process and update class members
 	 */
 	int mpu9250::readSensorState(){
-		if(this->readRegister(0x75) != DEV_ID){
-			perror("MPU6050: Failure to read from correct device\n");
+		if(this->readRegister(MPU9250_ADDR_WHO_AM_I) != this->i2caddress){
+			perror("MPU9250: Failure to read from correct device\n");
 			return -1;
 		}
+		// read in accessible registers
 
-		this->registers = this->readRegisters(DEV_NUM_REG, 0x0);
+		this->registers = this->readRegisters(MPU9250_DEV_NUM_REG, 0x0);
 
-		this->accelX = this->combineRegisters(*(registers+ADDR_ACCEL_DATA_X_H), *(registers+ADDR_ACCEL_DATA_X_L));
-		this->accelY = this->combineRegisters(*(registers+ADDR_ACCEL_DATA_Y_H), *(registers+ADDR_ACCEL_DATA_Y_L));
-		this->accelZ = this->combineRegisters(*(registers+ADDR_ACCEL_DATA_Z_H), *(registers+ADDR_ACCEL_DATA_Z_L));
+		this->accelX = this->combineRegisters(*(registers+MPU9250_ADDR_ACCEL_DATA_X_H), *(registers+MPU9250_ADDR_ACCEL_DATA_X_L));
+		this->accelY = this->combineRegisters(*(registers+MPU9250_ADDR_ACCEL_DATA_Y_H), *(registers+MPU9250_ADDR_ACCEL_DATA_Y_L));
+		this->accelZ = this->combineRegisters(*(registers+MPU9250_ADDR_ACCEL_DATA_Z_H), *(registers+MPU9250_ADDR_ACCEL_DATA_Z_L));
 
-		this->gyroX = this->combineRegisters(*(registers+ADDR_GYRO_DATA_X_H), *(registers+ADDR_GYRO_DATA_X_L));
-		this->gyroY = this->combineRegisters(*(registers+ADDR_GYRO_DATA_Y_H), *(registers+ADDR_GYRO_DATA_Y_L));
-		this->gyroZ = this->combineRegisters(*(registers+ADDR_GYRO_DATA_Z_H), *(registers+ADDR_GYRO_DATA_Z_L));
+		this->gyroX = this->combineRegisters(*(registers+MPU9250_ADDR_GYRO_DATA_X_H), *(registers+MPU9250_ADDR_GYRO_DATA_X_L));
+		this->gyroY = this->combineRegisters(*(registers+MPU9250_ADDR_GYRO_DATA_Y_H), *(registers+MPU9250_ADDR_GYRO_DATA_Y_L));
+		this->gyroZ = this->combineRegisters(*(registers+MPU9250_ADDR_GYRO_DATA_Z_H), *(registers+MPU9250_ADDR_GYRO_DATA_Z_L));
 
-		this->tempRaw = this->combineRegisters(*(registers+ADDR_TEMP_DATA_H), *(registers+ADDR_TEMP_DATA_L));
+		this->tempRaw = this->combineRegisters(*(registers+MPU9250_ADDR_TEMP_DATA_H), *(registers+MPU9250_ADDR_TEMP_DATA_L));
 
 		// read in the sensors actual current range
-		this->accel_range = (mpu9250::ACCEL_RANGE) ((*(registers + ADDR_ACCEL_CONFIG))&0x18);
-		this->gyro_range = (mpu9250::GYRO_RANGE) ((*(registers + ADDR_GYRO_CONFIG))&0x18);
+		this->accel_range = (mpu9250::ACCEL_RANGE) ((*(registers + MPU9250_ADDR_ACCEL_CONFIG))&0x18);
+		this->gyro_range = (mpu9250::GYRO_RANGE) ((*(registers + MPU9250_ADDR_GYRO_CONFIG))&0x18);
 
 		this->calcPitchRollYaw();
 		this->calcAngVel();
@@ -97,17 +100,17 @@ namespace samsRobot {
 		this->accel_range = range;
 		this->updateRegisters();
 	}
-	mpu9250::ACCEL_RANGE mpu9250::getAccelRange(void){
+	mpu9250::ACCEL_RANGE mpu9250::getAccelRange(void) const{
 		return this->accel_range;
 	}
 	/* set range of gyroscope according to GYRO_RANGE enum
 	 * param range: one of enum values
 	 */
-	void mpu9250::setGyroRange(mpu9250::GYRO_RANGE range){
+	void mpu9250::setGyroRange(mpu9250::GYRO_RANGE range) {
 		this->gyro_range = range;
 		this->updateRegisters();
 	}
-	mpu9250::GYRO_RANGE mpu9250::getGyroRange(void){
+	mpu9250::GYRO_RANGE mpu9250::getGyroRange(void) const{
 		return this->gyro_range;
 	}
 
@@ -162,7 +165,7 @@ namespace samsRobot {
 	/* calculate the temperature using the raw data
 	 */
 	void mpu9250::calcTemp(){
-		this->temp = ((float)(tempRaw)/TEMP_SENS) + (float)TEMP_OFFSET;
+		this->temp = ((float)(tempRaw)/MPU9250_TEMP_SENS) + (float)MPU9250_TEMP_OFFSET;
 	}
 
 	/* update the device registers as required
@@ -190,21 +193,21 @@ namespace samsRobot {
 		/* nothing to do here*/
 	}
 
-	short mpu9250::getAccelX(void){return this->accelX;}
-	short mpu9250::getAccelY(void){return this->accelY;}
-	short mpu9250::getAccelZ(void){return this->accelZ;}
+	short mpu9250::getAccelX(void) const {return this->accelX;}
+	short mpu9250::getAccelY(void) const {return this->accelY;}
+	short mpu9250::getAccelZ(void) const {return this->accelZ;}
 
-	float mpu9250::getPitch(void){return this->pitch;}
-	float mpu9250::getRoll(void){return this->roll;}
-	float mpu9250::getYaw(void){return this->yaw;}
+	float mpu9250::getPitch(void) const {return this->pitch;}
+	float mpu9250::getRoll(void) const {return this->roll;}
+	float mpu9250::getYaw(void) const {return this->yaw;}
 
-	float mpu9250::getAngVelX(void){return this->wvelX;}
-	float mpu9250::getAngVelY(void){return this->wvelY;}
-	float mpu9250::getAngVelZ(void){return this->wvelZ;}
+	float mpu9250::getAngVelX(void) const {return this->wvelX;}
+	float mpu9250::getAngVelY(void) const {return this->wvelY;}
+	float mpu9250::getAngVelZ(void) const {return this->wvelZ;}
 
 
-	float mpu9250::getTemp(void){return this->temp;}
+	float mpu9250::getTemp(void) const {return this->temp;}
 
-} // namespace
+ } // namespace
 
 
