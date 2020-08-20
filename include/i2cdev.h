@@ -1,10 +1,3 @@
-/*
- * i2cdev.h
- *
- *  Created on: 19 Jul 2020
- *  Author: sam
- */
-
 #ifndef I2CDEV_H_
 #define I2CDEV_H_
 

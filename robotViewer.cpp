@@ -3,6 +3,8 @@
 #include "mpu9250.h"
 #include "ak8963.h"
 #include "robotWin.h"
+// #include "robotGrapher.h"
+#include "opengltest.h"
 
 #include <iostream>
 #include <math.h>
@@ -18,6 +20,7 @@ void init_motors(void);
 void* update_robot_status(void*);
 void* draw_screen(void*);
 void* drive_motors(void*);
+void* draw_graphics(void*);
 
 // current user key, info returned from draw_screen();
 int current_key = 0;
@@ -41,19 +44,25 @@ int main(int argc, char **argv)
 
     // create a thread to handle draw screens and receive user input
     // create a thread to handle motors
-    pthread_t userThreadID, motorThreadID, statusThreadID;
+    // create a thread to get the status of the motors/controller
+    // create a thread to draw the opengl window
+    pthread_t userThreadID, motorThreadID, statusThreadID, openGLThreadID;
     pthread_attr_t userThreadAttr;
     pthread_attr_t motorThreadAttr;
     pthread_attr_t statusThreadAttr;
+    pthread_attr_t openGLThreadAttr;
     pthread_attr_init(&userThreadAttr);
     pthread_attr_init(&motorThreadAttr);
     pthread_attr_init(&statusThreadAttr);
+    pthread_attr_init(&openGLThreadAttr);
     pthread_create(&userThreadID, &userThreadAttr, draw_screen, &key);
     pthread_create(&motorThreadID, &motorThreadAttr, drive_motors, &key);
     pthread_create(&statusThreadID, &statusThreadAttr, update_robot_status, &key);
+    pthread_create(&openGLThreadID, &openGLThreadAttr, draw_graphics, &key);
 
     // do other stuff here;
 
+    pthread_join(openGLThreadID, NULL);
     pthread_join(userThreadID, NULL);
     pthread_join(motorThreadID, NULL);
     pthread_join(statusThreadID, NULL);
@@ -128,4 +137,10 @@ void* update_robot_status(void*){
 }
 
 void init_motors(void){
+}
+
+void* draw_graphics(void*){
+	opengltest();
+	pthread_exit(0);
+
 }

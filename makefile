@@ -1,19 +1,20 @@
 CC_cross = arm-linux-gnueabihf-g++
 CC=g++
 IDIR = include
-CFLAGS = -I$(IDIR)
-OPTIONS = -O0 -g -g3 -fmessage-length=0
+IDIR2 = /home/sam/src/glm/
+
+CFLAGS = -I$(IDIR) -I$(IDIR2)
+OPTIONS = -O0 -g -g3 -fmessage-length=0 -Wall
 
 ODIR = obj
 ODIR_cross = obj_cross
-LDIR = ../lib
 
-LIBS = -lm -lncurses -lpthread
+LIBS = -lm -lncurses -lpthread -lGLU -lGL -lglfw3 -ldl -L/home/sam/src/openGLrobot/lib/ -lGLEW
 
-_DEPS = defs.h i2cdev.h GPIO.h mpu6050.h mpu9250.h ak8963.h robotWin.h
+_DEPS = defs.h i2cdev.h GPIO.h mpu6050.h mpu9250.h ak8963.h robotWin.h opengltest.h 
 DEPS = $(patsubst %, $(IDIR)/%,$(_DEPS))
 
-_OBJ = robotViewer.o i2cdev.o GPIO.o mpu6050.o mpu9250.o ak8963.o robotWin.o
+_OBJ = robotViewer.o i2cdev.o GPIO.o mpu6050.o mpu9250.o ak8963.o robotWin.o opengltest.o 
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 OBJ_cross = $(patsubst %,$(ODIR_cross)/%,$(_OBJ))
 

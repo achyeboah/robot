@@ -4,8 +4,8 @@
 namespace samsRobot{
 
 	// terminal size requirements
-	#define MIN_TERM_WIDTH 80
-	#define MIN_TERM_HEIGHT 30
+	#define MIN_TERM_WIDTH 60
+	#define MIN_TERM_HEIGHT 20
 	
 	// threshold for detecting movement
 	#define YAW_THRESH 3

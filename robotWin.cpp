@@ -50,9 +50,9 @@ namespace samsRobot{
 		/* split screen into 20x20 grid */
 		int wWidth = COLS, wHeight = LINES;
 
-		w_status = newwin(11*wHeight/20, 18*wWidth/20, 1*wHeight/20, 1*wWidth/20); 
-		w_lcontrol = newwin(4*wHeight/20, 8*wWidth/20, 12*wHeight/20, 1*wWidth/20);
-		w_rcontrol = newwin(4*wHeight/20, 8*wWidth/20, 12*wHeight/20, 11*wWidth/20);
+		w_status = newwin(7*wHeight/20, 18*wWidth/20, 1*wHeight/20, 1*wWidth/20); 
+		w_lcontrol = newwin(6*wHeight/20, 8*wWidth/20, 9*wHeight/20, 1*wWidth/20);
+		w_rcontrol = newwin(6*wHeight/20, 8*wWidth/20, 9*wHeight/20, 11*wWidth/20);
 		w_input = newwin(3*wHeight/20, 18*wWidth/20, 16*wHeight/20, 1*wWidth/20);
 
 		// only need to do this once!
