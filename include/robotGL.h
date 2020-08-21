@@ -1,13 +1,13 @@
-#ifndef ROBOTGRAPHER_H
-#define ROBOTGRAPHER_H
+#ifndef ROBOTGL_H
+#define ROBOTGL_H
 
 namespace samsRobot{
 
-	class robotGrapher{
+	class robotGL{
 		private:
 		public:
-			robotGrapher();
-			~robotGrapher();
+			robotGL();
+			~robotGL();
 	};
 }
 

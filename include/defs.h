@@ -1,6 +1,10 @@
 #ifndef DEFS_H_
 #define DEFS_H_
 
+#define	samsRobot_VERSION_MAJOR 2020
+#define samsRobot_VERSION_MINOR 8
+#define samsRobot_VERSION_PATCH 21
+
 namespace samsRobot{
 
 	// terminal size requirements

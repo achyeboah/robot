@@ -2,8 +2,8 @@
 #include "mpu6050.h"
 #include "mpu9250.h"
 #include "ak8963.h"
-#include "robotWin.h"
-// #include "robotGrapher.h"
+#include "robotCurses.h"
+// #include "robotGL.h"
 #include "opengltest.h"
 
 #include <iostream>
@@ -29,46 +29,51 @@ int previous_key = 0;
 // current motor_status, info returned from drive_motors() and update_robot_status();
 int motor_status = 0;
 
-robotWin myscreen;
+robotCurses myscreen;
 
 int main(int argc, char **argv)
 {
-    int key = 0;
+	int key = 0;
+	printf("Welcome\n");
+	printf("Starting v%02d.%2d.%02d of samsRobot\n\n",
+			samsRobot_VERSION_MAJOR,
+			samsRobot_VERSION_MINOR,
+			samsRobot_VERSION_PATCH );
 
-    // start the curses screen
+	// start the curses screen
 	if(myscreen.getValidWins() != TRUE)
 		exit(2);
 
-    // prepare the motors
-    init_motors();
+	// prepare the motors
+	init_motors();
 
-    // create a thread to handle draw screens and receive user input
-    // create a thread to handle motors
-    // create a thread to get the status of the motors/controller
-    // create a thread to draw the opengl window
-    pthread_t userThreadID, motorThreadID, statusThreadID, openGLThreadID;
-    pthread_attr_t userThreadAttr;
-    pthread_attr_t motorThreadAttr;
-    pthread_attr_t statusThreadAttr;
-    pthread_attr_t openGLThreadAttr;
-    pthread_attr_init(&userThreadAttr);
-    pthread_attr_init(&motorThreadAttr);
-    pthread_attr_init(&statusThreadAttr);
-    pthread_attr_init(&openGLThreadAttr);
-    pthread_create(&userThreadID, &userThreadAttr, draw_screen, &key);
-    pthread_create(&motorThreadID, &motorThreadAttr, drive_motors, &key);
-    pthread_create(&statusThreadID, &statusThreadAttr, update_robot_status, &key);
-    pthread_create(&openGLThreadID, &openGLThreadAttr, draw_graphics, &key);
+	// create a thread to handle draw screens and receive user input
+	// create a thread to handle motors
+	// create a thread to get the status of the motors/controller
+	// create a thread to draw the opengl window
+	pthread_t userThreadID, motorThreadID, statusThreadID, openGLThreadID;
+	pthread_attr_t userThreadAttr;
+	pthread_attr_t motorThreadAttr;
+	pthread_attr_t statusThreadAttr;
+	pthread_attr_t openGLThreadAttr;
+	pthread_attr_init(&userThreadAttr);
+	pthread_attr_init(&motorThreadAttr);
+	pthread_attr_init(&statusThreadAttr);
+	pthread_attr_init(&openGLThreadAttr);
+	pthread_create(&userThreadID, &userThreadAttr, draw_screen, &key);
+	pthread_create(&motorThreadID, &motorThreadAttr, drive_motors, &key);
+	pthread_create(&statusThreadID, &statusThreadAttr, update_robot_status, &key);
+	pthread_create(&openGLThreadID, &openGLThreadAttr, draw_graphics, &key);
 
-    // do other stuff here;
+	// do other stuff here;
 
-    pthread_join(openGLThreadID, NULL);
-    pthread_join(userThreadID, NULL);
-    pthread_join(motorThreadID, NULL);
-    pthread_join(statusThreadID, NULL);
+	pthread_join(openGLThreadID, NULL);
+	pthread_join(userThreadID, NULL);
+	pthread_join(motorThreadID, NULL);
+	pthread_join(statusThreadID, NULL);
 
 
-    exit(0);
+	exit(0);
 }
 
 void* draw_screen(void*){

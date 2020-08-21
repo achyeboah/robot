@@ -6,7 +6,7 @@
 namespace samsRobot{
 
 	// create our class to handle our curses window
-	class robotWin{
+	class robotCurses{
 		private:
 			// pointers to windows
 			WINDOW* w_lcontrol;
@@ -17,8 +17,8 @@ namespace samsRobot{
 			bool validWins;
 			bool motor_status = 0;
 		public:
-			robotWin();
-			~robotWin();
+			robotCurses();
+			~robotCurses();
 
 			int message_box(const char* msg);
 			void create_board(void);

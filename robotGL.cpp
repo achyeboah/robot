@@ -1,8 +1,11 @@
 #include "defs.h"
-#include "robotGrapher.h"
+#include "robotGL.h"
 
-robotGrapher::robotGrapher(){
-}
+namespace samsRobot{
 
-robotGrapher::~robotGrapher(){
+	robotGL::robotGL(){
+	}
+
+	robotGL::~robotGL(){
+	}
 }

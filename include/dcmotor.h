@@ -2,8 +2,10 @@
 #define DCMOTOR_H
 
 #include "GPIO.h"
+using namespace exploringRPi;
 
 namespace samsRobot{
+
 	class dcmotor{
 		public:
 			enum MOTOR_DIR{STOPPED, CLOCKW, ACLOCKW};
@@ -28,7 +30,7 @@ namespace samsRobot{
 			virtual void reverse_dir(void); // reverse direction of travel
 
 				
-		}
+		};
 
 }
 #endif

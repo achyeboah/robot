@@ -1,4 +1,4 @@
-#include "robotWin.h"
+#include "robotCurses.h"
 #include "defs.h"
 
 #include <stdlib.h>
@@ -6,7 +6,7 @@
 #include <unistd.h>
 
 namespace samsRobot{
-	robotWin::robotWin(){
+	robotCurses::robotCurses(){
 		// doesn't do much
 		validWins = FALSE;
 		motor_status = 0;
@@ -17,14 +17,14 @@ namespace samsRobot{
 		}
 	}
 
-	robotWin::~robotWin(){
+	robotCurses::~robotCurses(){
     		/* when done, free up the board, and exit */
 		destroy_board();
 		endwin();
 	}
 
 	// function to start the curses screen
-	int robotWin::init_screen(void){
+	int robotCurses::init_screen(void){
 		initscr(); // start the curses screen
 		raw(); // handle input immediately
 		noecho(); // Don't show incoming text
@@ -46,7 +46,7 @@ namespace samsRobot{
 		}
 	}
 
-	void robotWin::create_board(void){
+	void robotCurses::create_board(void){
 		/* split screen into 20x20 grid */
 		int wWidth = COLS, wHeight = LINES;
 
@@ -64,7 +64,7 @@ namespace samsRobot{
 		mvwprintw(w_input, 2, 1, "Please press h for help, q to quit."); wrefresh(w_input);
 	}
 
-	void robotWin::draw_board(int keypress){
+	void robotCurses::draw_board(int keypress){
 		if(this->getValidWins() == TRUE){
 			// redraw the keys + status - taking a keypress as argument.
 			/* put border on each window and refresh */
@@ -172,11 +172,11 @@ namespace samsRobot{
 		}
 	}
 
-	bool robotWin::getValidWins(void) const {
+	bool robotCurses::getValidWins(void) const {
 		return validWins;
 	}
 
-	void robotWin::destroy_board(void){
+	void robotCurses::destroy_board(void){
 		/* erase every box and delete each window 
 		only if we have a window anyway */
 		if(this->getValidWins() == TRUE){
@@ -187,7 +187,7 @@ namespace samsRobot{
 		}
 	}
 
-	int robotWin::message_box(const char* msg){
+	int robotCurses::message_box(const char* msg){
 		int key;
 		WINDOW* temp = newwin(1*LINES/2, 1*COLS/2, 1*LINES/4, 1*COLS/4);
 		wborder(temp, 0,0,0,0,0,0,0,0);
@@ -199,7 +199,7 @@ namespace samsRobot{
 
 	}
 
-	int robotWin::update(int motor_status){
+	int robotCurses::update(int motor_status){
 		// let us know whats happening in the outside world
 		this->motor_status = motor_status;
 

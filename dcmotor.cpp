@@ -1,6 +1,7 @@
-#include "defs.h"
+// #include "defs.h"
 #include "dcmotor.h"
 #include "GPIO.h"
+
 #include <unistd.h>
 
 using namespace exploringRPi;
@@ -82,7 +83,5 @@ namespace samsRobot{
 	 void dcmotor::stop(void){
 		 this->setDirection(dcmotor::STOPPED);
 	 }
-
-		 
 
 }
