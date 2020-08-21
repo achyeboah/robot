@@ -75,7 +75,10 @@ namespace samsRobot{
 			wborder(w_input,0,0,0,0,0,0,0,0); wrefresh(w_input);
 
 			// identify each window and show user keys
-			mvprintw(LINES - 1, (COLS - 13) / 2, "robotViewer v1");
+			mvprintw(LINES - 1, (COLS - 13) / 2, "robotViewer %02d.%02d.%02d",
+					samsRobot_VERSION_MAJOR,
+					samsRobot_VERSION_MINOR,
+					samsRobot_VERSION_PATCH );
 
 			int x,y;
 
@@ -204,6 +207,7 @@ namespace samsRobot{
 		this->motor_status = motor_status;
 
 		int keys = getch();
+
 		// update the screens
 		this->draw_board(keys);
 

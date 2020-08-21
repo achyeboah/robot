@@ -15,34 +15,59 @@
 using namespace samsRobot;
 
 void init_motors(void);
+void print_usage(int argc, char **argv);
 
 // other handlers
 void* update_robot_status(void*);
-void* draw_screen(void*);
+void* draw_curses(void*);
 void* drive_motors(void*);
 void* draw_graphics(void*);
 
-// current user key, info returned from draw_screen();
+// current user key, info returned from draw_curses();
 int current_key = 0;
 int previous_key = 0;
 
 // current motor_status, info returned from drive_motors() and update_robot_status();
 int motor_status = 0;
 
-robotCurses myscreen;
 
 int main(int argc, char **argv)
 {
-	int key = 0;
-	printf("Welcome\n");
-	printf("Starting v%02d.%2d.%02d of samsRobot\n\n",
-			samsRobot_VERSION_MAJOR,
-			samsRobot_VERSION_MINOR,
-			samsRobot_VERSION_PATCH );
+	/* options for this program are as follows
+	 * c|C displays the ncurses screen
+	 * g|G displays the opengl screen
+	 * absence of either of these, or any other displays usage screen
+	 */
 
-	// start the curses screen
-	if(myscreen.getValidWins() != TRUE)
-		exit(2);
+	int key = 0;
+	bool do_curses = FALSE;
+	bool do_gl = FALSE;
+	int opt; // track options
+
+	if (argc < 2){
+		print_usage(argc, argv);
+		exit(EXIT_FAILURE);
+	}
+
+	while((opt = getopt(argc, argv, "cgCG")) != -1){
+		switch(opt){
+			case 'c':
+			case 'C':
+				do_curses = TRUE;
+				break;
+			case 'g':
+			case 'G':
+				do_gl = TRUE;
+				break;
+			default:
+				print_usage(argc, argv);
+				exit(EXIT_FAILURE);
+		}
+	}
+
+	// if both curses and opengl are not started, nothing to show, so just exit
+	if ((do_gl == FALSE) && (do_curses == FALSE))
+		exit(0);
 
 	// prepare the motors
 	init_motors();
@@ -60,35 +85,54 @@ int main(int argc, char **argv)
 	pthread_attr_init(&motorThreadAttr);
 	pthread_attr_init(&statusThreadAttr);
 	pthread_attr_init(&openGLThreadAttr);
-	pthread_create(&userThreadID, &userThreadAttr, draw_screen, &key);
+
+	if (do_curses == TRUE)
+		pthread_create(&userThreadID, &userThreadAttr, draw_curses, &key);
+	if (do_gl == TRUE)
+		pthread_create(&openGLThreadID, &openGLThreadAttr, draw_graphics, &key);
+
 	pthread_create(&motorThreadID, &motorThreadAttr, drive_motors, &key);
 	pthread_create(&statusThreadID, &statusThreadAttr, update_robot_status, &key);
-	pthread_create(&openGLThreadID, &openGLThreadAttr, draw_graphics, &key);
 
 	// do other stuff here;
 
-	pthread_join(openGLThreadID, NULL);
-	pthread_join(userThreadID, NULL);
+	if (do_gl == TRUE)
+		pthread_join(openGLThreadID, NULL);
+	if (do_curses == TRUE)
+		pthread_join(userThreadID, NULL);
+
 	pthread_join(motorThreadID, NULL);
 	pthread_join(statusThreadID, NULL);
-
 
 	exit(0);
 }
 
-void* draw_screen(void*){
+void* draw_curses(void*){
 	int keys = 0;
+	robotCurses myscreen;
+
+	if(myscreen.getValidWins() != TRUE)
+		pthread_exit(0);
 
 	// dont need to check for valid windows - we've got this far already!
-	
-		do {
+	do {
+		// check if some other thread said to quit
+		if ((current_key != 'q') && (current_key != 'Q')){
+
 			keys = myscreen.update(motor_status); 
 
 			// make the current key available to other threads
 			previous_key = current_key;
 			current_key = keys;
+			usleep(20000); // rest a bit
+		}else{
+			printf("--------------QQQQQ--------------");
+			keys = 'q';
+		}
 
-		} while ((keys != 'q') && (keys != 'Q'));
+	} while ((keys != 'q') && (keys != 'Q'));
+
+	// received a q
 	pthread_exit(0);
 }
 
@@ -146,6 +190,20 @@ void init_motors(void){
 
 void* draw_graphics(void*){
 	opengltest();
+	current_key = 'q';
 	pthread_exit(0);
 
+}
+
+void print_usage(int argc, char** argv){
+	printf("\n\nWelcome! ");
+	printf("This is %s v%02d.%02d.%02d\n",
+			argv[0],
+			samsRobot_VERSION_MAJOR,
+			samsRobot_VERSION_MINOR,
+			samsRobot_VERSION_PATCH );
+	printf("Please note that program %s is as follows. \n", argv[0]);
+	printf("\tc\tUse NCurses window\n");
+	printf("\tg\tUse openGL window\n");
+	printf("\nOptions may be combined\n\n");
 }
