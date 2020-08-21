@@ -25,6 +25,7 @@ void* draw_graphics(void*);
 
 // current user key, info returned from draw_curses();
 int current_key = 0;
+bool quit_gl = FALSE;
 int previous_key = 0;
 
 // current motor_status, info returned from drive_motors() and update_robot_status();
@@ -117,7 +118,7 @@ void* draw_curses(void*){
 	// dont need to check for valid windows - we've got this far already!
 	do {
 		// check if some other thread said to quit
-		if ((current_key != 'q') && (current_key != 'Q')){
+		if (quit_gl != TRUE){
 
 			keys = myscreen.update(motor_status); 
 
@@ -126,8 +127,8 @@ void* draw_curses(void*){
 			current_key = keys;
 			usleep(20000); // rest a bit
 		}else{
-			printf("--------------QQQQQ--------------");
 			keys = 'q';
+			current_key = keys;
 		}
 
 	} while ((keys != 'q') && (keys != 'Q'));
@@ -142,7 +143,7 @@ void* drive_motors(void*){
 	do{
 		usleep(20000); // run the motor
 
-	}while ((current_key != 'q') && (current_key != 'Q'));
+	}while ((current_key != 'q') && (current_key != 'Q') && (quit_gl != TRUE));
 
 	pthread_exit(0);
 }
@@ -181,8 +182,8 @@ void* update_robot_status(void*){
 */
 		// go to sleep for a bit
 		usleep(10000); // 10ms
-	}while ((current_key != 'q') && (current_key!='Q'));
-	pthread_exit(0);
+	}while ((current_key != 'q') && (current_key!='Q') && (quit_gl !=TRUE));
+	pthread_exit, int(0);
 }
 
 void init_motors(void){
@@ -190,7 +191,7 @@ void init_motors(void){
 
 void* draw_graphics(void*){
 	opengltest();
-	current_key = 'q';
+	quit_gl = TRUE;
 	pthread_exit(0);
 
 }

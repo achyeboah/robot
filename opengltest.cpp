@@ -72,23 +72,23 @@ int opengltest( void )
 	//////////////////////////////////////////////////
 	static const char* vertex_shader_text =
 		"#version 330\n"
+		"layout(location=0) in vec3 vertexPosition_modelspace;\n"
+		"layout(location=1) in vec3 vertexColor;\n"
+		"out vec3 fragmentColor;\n"
 		"uniform mat4 MVP;\n"
-		"in vec3 vCol;\n"
-		"in vec2 vPos;\n"
-		"out vec3 color;\n"
 		"void main()\n"
 		"{\n"
-		"    gl_Position = MVP * vec4(vPos, 0.0, 1.0);\n"
-		"    color = vCol;\n"
+		"    gl_Position = MVP * vec4(vertexPosition_modelspace, 1);\n"
+		"    fragmentColor = vertexColor;\n"
 		"}\n";
 
 	static const char* fragment_shader_text =
 		"#version 330\n"
-		"in vec3 color;\n"
-		"out vec4 fragment;\n"
+		"in vec3 fragmentColor;\n"
+		"out vec3 color;\n"
 		"void main()\n"
 		"{\n"
-		"    fragment = vec4(color, 1.0);\n"
+		"	color = fragmentColor;"
 		"}\n";
 
 	const GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
@@ -126,39 +126,39 @@ int opengltest( void )
 		-1.0f,-1.0f,-1.0f,
 		-1.0f,-1.0f, 1.0f,
 		-1.0f, 1.0f, 1.0f,
-		1.0f, 1.0f,-1.0f,
+		 1.0f, 1.0f,-1.0f,
 		-1.0f,-1.0f,-1.0f,
 		-1.0f, 1.0f,-1.0f,
-		1.0f,-1.0f, 1.0f,
+		 1.0f,-1.0f, 1.0f,
 		-1.0f,-1.0f,-1.0f,
-		1.0f,-1.0f,-1.0f,
-		1.0f, 1.0f,-1.0f,
-		1.0f,-1.0f,-1.0f,
+		 1.0f,-1.0f,-1.0f,
+		 1.0f, 1.0f,-1.0f,
+		 1.0f,-1.0f,-1.0f,
 		-1.0f,-1.0f,-1.0f,
 		-1.0f,-1.0f,-1.0f,
 		-1.0f, 1.0f, 1.0f,
 		-1.0f, 1.0f,-1.0f,
-		1.0f,-1.0f, 1.0f,
+		 1.0f,-1.0f, 1.0f,
 		-1.0f,-1.0f, 1.0f,
 		-1.0f,-1.0f,-1.0f,
 		-1.0f, 1.0f, 1.0f,
 		-1.0f,-1.0f, 1.0f,
-		1.0f,-1.0f, 1.0f,
-		1.0f, 1.0f, 1.0f,
-		1.0f,-1.0f,-1.0f,
-		1.0f, 1.0f,-1.0f,
-		1.0f,-1.0f,-1.0f,
-		1.0f, 1.0f, 1.0f,
-		1.0f,-1.0f, 1.0f,
-		1.0f, 1.0f, 1.0f,
-		1.0f, 1.0f,-1.0f,
+		 1.0f,-1.0f, 1.0f,
+		 1.0f, 1.0f, 1.0f,
+		 1.0f,-1.0f,-1.0f,
+		 1.0f, 1.0f,-1.0f,
+		 1.0f,-1.0f,-1.0f,
+		 1.0f, 1.0f, 1.0f,
+		 1.0f,-1.0f, 1.0f,
+		 1.0f, 1.0f, 1.0f,
+		 1.0f, 1.0f,-1.0f,
 		-1.0f, 1.0f,-1.0f,
-		1.0f, 1.0f, 1.0f,
+		 1.0f, 1.0f, 1.0f,
 		-1.0f, 1.0f,-1.0f,
 		-1.0f, 1.0f, 1.0f,
-		1.0f, 1.0f, 1.0f,
+		 1.0f, 1.0f, 1.0f,
 		-1.0f, 1.0f, 1.0f,
-		1.0f,-1.0f, 1.0f
+		 1.0f,-1.0f, 1.0f
 	};
 
 	// One color for each vertex. They were generated randomly.
@@ -248,7 +248,7 @@ int opengltest( void )
 				);
 
 		// Draw the triangle !
-		glDrawArrays(GL_TRIANGLES, 0, 12*3); // 12*3 indices starting at 0 -> 12 triangles
+		glDrawArrays(GL_TRIANGLES, 0,12* 3); // 12*3 indices starting at 0 -> 12 triangles
 
 		glDisableVertexAttribArray(0);
 		glDisableVertexAttribArray(1);
