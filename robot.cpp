@@ -26,6 +26,7 @@ void* draw_graphics(void*);
 int current_key = 0;
 bool quit_gl = FALSE;
 int previous_key = 0;
+float robotGL_fps = 0.0f;
 
 // current motor_status, info returned from drive_motors() and update_robot_status();
 int motor_status = 0;
@@ -195,6 +196,7 @@ void* draw_curses(void*){
 		// check if some other thread said to quit
 		if (quit_gl != TRUE){
 
+			myscreen.set_ogl_fps(robotGL_fps);
 			keys = myscreen.update(motor_status); 
 
 			// make the current key available to other threads
@@ -268,12 +270,13 @@ void* draw_graphics(void*){
 	robotGL glWin;
 	// need to pass in some parameters
 	// glWin->set_bg();
-	glWin.set_mat(vertex_data, 36);
-	glWin.set_col(color_data, 36);
+	glWin.set_mat(vertex_data, 3*4*12);
+	glWin.set_col(color_data, 3*4*12);
 
 	do{
 		glWin.update();
-		usleep(10000);
+		robotGL_fps = glWin.get_fps();
+		usleep(10000); // achieving 80fps with 10us sleep
 	}while(glWin.get_progFinished() == FALSE);
 
 	// send a message to other threads that its time to quit!
@@ -290,7 +293,7 @@ void print_usage(int argc, char** argv){
 			samsRobot_VERSION_MINOR,
 			samsRobot_VERSION_PATCH );
 	printf("Please note that program %s is as follows. \n", argv[0]);
-	printf("\tc\tUse NCurses window\n");
-	printf("\tg\tUse openGL window\n");
-	printf("\nOptions may be combined\n\n");
+	printf("\t-c\tUse NCurses window\n");
+	printf("\t-g\tUse openGL window\n");
+	printf("\nOptions may be combined eg (-gc)\n\n");
 }

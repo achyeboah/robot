@@ -16,6 +16,7 @@ namespace samsRobot{
 
 			bool validWins;
 			bool motor_status = 0;
+			float ogl_fps = 3.1f;
 		public:
 			robotCurses();
 			~robotCurses();
@@ -28,6 +29,7 @@ namespace samsRobot{
 			
 			int init_screen(void);
 			bool getValidWins(void) const;
+			void set_ogl_fps(const float fps);
 	};
 }
 

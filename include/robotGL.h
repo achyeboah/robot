@@ -5,9 +5,9 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 
 namespace samsRobot{
+
 
 	//////////////////////////////////////////////////
 	static const char* vertex_shader_text =
@@ -55,6 +55,19 @@ namespace samsRobot{
 			int numVertices;
 
 			bool prog_finished;
+			float mouse_wh_speed, keys_speed;
+			float fps; // track how fast we're updating screen
+			
+			// use these to compute user interaction
+			// Initial position : on +Z
+			glm::vec3 position = glm::vec3( 0, 0, 5 ); 
+			// Initial horizontal angle : toward -Z
+			float horizontalAngle = 3.14f;
+			// Initial vertical angle : none
+			float verticalAngle = 0.0f;
+			// Initial Field of View
+			float initialFoV = 45.0f;
+
 
 		public:
 			robotGL();
@@ -67,11 +80,22 @@ namespace samsRobot{
 
 			void set_mat(const GLfloat* , const int );
 			void set_col(const GLfloat* , const int );
-
-			void set_view(const glm::vec4 view);
-			void set_proj(const glm::vec4 proj);
+			void set_view(const glm::vec3 cam_pos, const glm::vec3 look_at_dir);
+			void set_proj(const float fov, const float asp_ratio);
 			void set_bg(const float r, const float g, const float b, const float a);
+
+			GLfloat* get_mat(int &size) const;
+			GLfloat* get_col(int &size) const;
+
+			inline float get_keys_speed(void) const {return this->keys_speed;}
+			inline float get_mouse_wh_speed(void) const { return this->mouse_wh_speed;}
+			glm::mat4 get_view() const;
+			inline float get_fps(void){return this->fps;}
 			inline bool get_progFinished(void){return this->prog_finished;}
+
+			// from tutorial 06
+			void computeMatricesFromInputs(void);
+
 	};
 }
 

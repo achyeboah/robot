@@ -166,6 +166,7 @@ namespace samsRobot{
 				mvwprintw(w_status, 2, 1, "Status: STOPPED ");
 			else
 				mvwprintw(w_status, 2, 1, "Status: MOVEMENT ");
+			mvwprintw(w_status, 3,1, "openGL FPS = %02.2f", ogl_fps);
 
 			// draw all windows
 			wrefresh(w_lcontrol);
@@ -221,5 +222,9 @@ namespace samsRobot{
 		this->draw_board(); // remove the highlight
 
 		return keys;
+	}
+		
+	void robotCurses::set_ogl_fps(const float fps){
+		this->ogl_fps = fps;
 	}
 }
