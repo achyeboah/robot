@@ -3,7 +3,7 @@
 
 #define	samsRobot_VERSION_MAJOR 2020
 #define samsRobot_VERSION_MINOR 8
-#define samsRobot_VERSION_PATCH 21
+#define samsRobot_VERSION_PATCH 24
 
 namespace samsRobot{
 

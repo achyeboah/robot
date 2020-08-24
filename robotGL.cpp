@@ -16,7 +16,7 @@ namespace samsRobot{
 	robotGL::robotGL(){
 		prog_finished = false;
 		keys_speed = 3.0f; // 3 units per second;
-		mouse_wh_speed = 0.01f; //
+		mouse_wh_speed = 0.001f; //
 		this->init();
 	}
 
@@ -166,7 +166,6 @@ namespace samsRobot{
 		computeMatricesFromInputs();
 		this->MVP = this->proj * this->view * this->model;
 
-
 		// Send our transformation to the currently bound shader
 		// in the "MVP" uniform
 		glUniformMatrix4fv(this->matrixID, 1, GL_FALSE, &(this->MVP[0][0]));
@@ -208,6 +207,10 @@ namespace samsRobot{
 		static int temp;
 		if (glfwGetKey(this->window, GLFW_KEY_Q ) == GLFW_PRESS){
 			prog_finished = true;
+		}
+		if(glfwGetKey(this->window, GLFW_KEY_R) == GLFW_PRESS){
+			fprintf(stderr, "resetting view\n");
+			reset_view();
 		}
 	}
 
@@ -303,8 +306,7 @@ namespace samsRobot{
 			position += direction * deltaTime * keys_speed;
 		}
 		// Move backward
-		if (glfwGetKey( this->window, GLFW_KEY_DOWN ) == GLFW_PRESS){
-			position -= direction * deltaTime * keys_speed;
+		if (glfwGetKey( this->window, GLFW_KEY_DOWN ) == GLFW_PRESS){position -= direction * deltaTime * keys_speed;
 		}
 		// Strafe right
 		if (glfwGetKey(this->window, GLFW_KEY_RIGHT ) == GLFW_PRESS){
@@ -329,6 +331,17 @@ namespace samsRobot{
 		// For the next frame, the "last time" will be "now"
 		this->fps = 1.0f/deltaTime;
 		lastTime = currentTime;
+	}
+
+	void robotGL::reset_view(void){
+		// Initial position : on +Z
+		glm::vec3 position = ROBOTGL_INIT_POS; 
+		// Initial horizontal angle : toward -Z
+		float horizontalAngle = ROBOTGL_INIT_HANG;
+		// Initial vertical angle : none
+		float verticalAngle = ROBOTGL_INIT_VANG;
+		// Initial Field of View
+		float initialFoV = ROBOTGL_INIT_FOV;
 	}
 
 

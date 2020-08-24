@@ -1,6 +1,11 @@
 #ifndef ROBOTGL_H
 #define ROBOTGL_H
 
+#define ROBOTGL_INIT_POS glm::vec3( 0, 0, 10 ); 
+#define ROBOTGL_INIT_FOV 45.0f
+#define ROBOTGL_INIT_HANG 3.14f
+#define ROBOTGL_INIT_VANG 0.0f
+
 // Include GLFW
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -60,13 +65,13 @@ namespace samsRobot{
 			
 			// use these to compute user interaction
 			// Initial position : on +Z
-			glm::vec3 position = glm::vec3( 0, 0, 5 ); 
+			glm::vec3 position = ROBOTGL_INIT_POS; 
 			// Initial horizontal angle : toward -Z
-			float horizontalAngle = 3.14f;
+			float horizontalAngle = ROBOTGL_INIT_HANG;
 			// Initial vertical angle : none
-			float verticalAngle = 0.0f;
+			float verticalAngle = ROBOTGL_INIT_VANG;
 			// Initial Field of View
-			float initialFoV = 45.0f;
+			float initialFoV = ROBOTGL_INIT_FOV;
 
 
 		public:
@@ -81,6 +86,7 @@ namespace samsRobot{
 			void set_mat(const GLfloat* , const int );
 			void set_col(const GLfloat* , const int );
 			void set_view(const glm::vec3 cam_pos, const glm::vec3 look_at_dir);
+			void reset_view(void);
 			void set_proj(const float fov, const float asp_ratio);
 			void set_bg(const float r, const float g, const float b, const float a);
 
