@@ -11,8 +11,9 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 
-namespace samsRobot{
+#include "robotSeg.h"
 
+namespace samsRobot{
 
 	//////////////////////////////////////////////////
 	static const char* vertex_shader_text =
@@ -35,7 +36,6 @@ namespace samsRobot{
 		"{\n"
 		"	color = fragmentColor;"
 		"}\n";
-
 
 	class robotGL{
 		private:
@@ -84,6 +84,7 @@ namespace samsRobot{
 			void update(void);
 
 			void set_mat(const GLfloat* , const int );
+			void set_mat2(const float* , const float*, const int );
 			void set_col(const GLfloat* , const int );
 			void set_view(const glm::vec3 cam_pos, const glm::vec3 look_at_dir);
 			void reset_view(void);
@@ -101,7 +102,10 @@ namespace samsRobot{
 
 			// from tutorial 06
 			void computeMatricesFromInputs(void);
+			void create_cuboid(const robotSeg segment);
 
+			// callbacks
+			static void glfw_resize_callback(GLFWwindow* window, int width, int height);
 	};
 }
 

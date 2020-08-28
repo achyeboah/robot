@@ -16,7 +16,9 @@ namespace samsRobot{
 	robotGL::robotGL(){
 		prog_finished = false;
 		keys_speed = 3.0f; // 3 units per second;
-		mouse_wh_speed = 0.001f; //
+		mouse_wh_speed = 0.0f; //
+		numVertices = 0;
+		numIndices = 0;
 		this->init();
 	}
 
@@ -28,6 +30,7 @@ namespace samsRobot{
 			getchar();
 			return -1;
 		}
+
 
 		glfwWindowHint(GLFW_SAMPLES, 4);
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -44,6 +47,7 @@ namespace samsRobot{
 			return -1;
 		}
 		glfwMakeContextCurrent(this->window);
+		glfwSetFramebufferSizeCallback(window, this->glfw_resize_callback);
 
 		// Initialize GLEW
 		glewExperimental = true; // Needed for core profile
@@ -53,10 +57,11 @@ namespace samsRobot{
 			glfwTerminate();
 			return -1;
 		}
+
 		// Ensure we can capture the escape key being pressed below
 		glfwSetInputMode(this->window, GLFW_STICKY_KEYS, GL_TRUE);
 		// Hide the mouse and enable unlimited mouvement
-		glfwSetInputMode(this->window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		// glfwSetInputMode(this->window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 		// Set the mouse at the center of the screen
 		glfwPollEvents();
@@ -131,6 +136,39 @@ namespace samsRobot{
 		glBufferData(GL_ARRAY_BUFFER, 3*sizeof(GLfloat)*this->numVertices, this->g_color_buffer_data, GL_STATIC_DRAW);
 	}
 
+	void robotGL::set_mat2(const float* vdata, const float* idata, const int numVertices){
+		// vertices. Three consecutive floats give a 3D vertex; Three consecutive vertices give a triangle.
+		// A cube has 6 faces with 2 triangles each, so this makes 6*2=12 triangles, and 12*3=36 vertices, 3*36=108 floats
+		// however we'll use indexing!
+		delete this->g_vertex_buffer_data;
+		delete this->g_index_buffer_data;
+		this->g_vertex_buffer_data = new GLfloat[3*numVertices];
+		this->g_index_buffer_data = new GLfloat[numIndices];
+
+		if((this->g_vertex_buffer_data == NULL) || (this->g_index_buffer_data == NULL)){
+			fprintf(stderr, "set_mat2:: not enough memory\n");
+			this->numVertices = 0;
+			this->numIndices = 0;
+			return;
+		}
+		for(int i = 0; i < 3*numVertices; i++)
+			g_vertex_buffer_data[i] = (GLfloat)vdata[i];
+		this->numVertices = numVertices;
+
+		for(i = 0; i < numIndices; i++)
+			this->g_index_buffer_data[i] = (GLfloat)vdata[i];
+		this->numIndices = numIndices;
+
+		glGenBuffers(1, &(this->vertexbuffer));
+		glBindBuffer(GL_ARRAY_BUFFER, this->vertexbuffer);
+		glBufferData(GL_ARRAY_BUFFER, 3*sizeof(GLfloat)*this->numVertices, this->g_vertex_buffer_data, GL_STATIC_DRAW);
+
+		glGenBuffers(1, &(this->colorbuffer));
+		glBindBuffer(GL_ARRAY_BUFFER, this->colorbuffer);
+		glBufferData(GL_ARRAY_BUFFER, 3*sizeof(GLfloat)*this->numVertices, this->g_color_buffer_data, GL_STATIC_DRAW);
+	}
+
+
 	void robotGL::set_col(const float* data, const int numVertices){
 		// vertices. Three consecutive floats give a 3D vertex; Three consecutive vertices give a triangle.
 		// A cube has 6 faces with 2 triangles each, so this makes 6*2=12 triangles, and 12*3=36 vertices, 3*36=108 floats
@@ -204,12 +242,10 @@ namespace samsRobot{
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 
-		static int temp;
 		if (glfwGetKey(this->window, GLFW_KEY_Q ) == GLFW_PRESS){
 			prog_finished = true;
 		}
 		if(glfwGetKey(this->window, GLFW_KEY_R) == GLFW_PRESS){
-			fprintf(stderr, "resetting view\n");
 			reset_view();
 		}
 	}
@@ -344,5 +380,84 @@ namespace samsRobot{
 		float initialFoV = ROBOTGL_INIT_FOV;
 	}
 
+	void robotGL::create_cuboid(const robotSeg segment){
+		// create a cuboid for the segment passed
+		// each cuboid has 6 faces, 2 triangles per face, 3 vertices per triangle (no indexing), 3 floats per vertex
+		float x,y,z,cx,cy,cz;
+		segment.get_dimensions(x,y,z);
+		segment.get_centre(cx, cy, cz);
+		
+		// lets define our cuboid faces use end quads bounded by vertices abcdefg
+		// a(l,0,0), b(l,w,0), c(l,0,h), d(l,w,h)
+		// h(0,0,0). g(0,w,0), e(0,0,h), f(0,w,h);
+		struct myvec3 {float x; float y; float z;};
+		myvec3 a{.x=x,.y=0,.z=0}, b{.x=x,.y=y,.z=0}, c{.x=x,.y=0,.z=z}, d{.x=x,.y=y,.z=z};
+		myvec3 h{.x=0,.y=0,.z=0}, g{.x=0,.y=y,.z=0}, e{.x=0,.y=0,.z=z}, f{.x=0,.y=y,.z=z};
 
-}
+		// use an initializer list to fill values quickly, and presume successful;
+		const float* cube  = new float[3*3*2*6]{ 
+			a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z,
+			b.x, b.y, b.z, c.x, c.y, c.z, d.x, d.y, d.z,
+
+			c.x, c.y, c.z, d.x, d.y, d.z, e.x, e.y, e.z,
+			d.x, d.y, d.z, e.x, e.y, e.z, f.x, f.y, f.z,
+
+			e.x, e.y, e.z, f.x, f.y, f.z, h.x, h.y, h.z,
+			f.x, f.y, f.z, g.x, g.y, g.z, h.x, h.y, h.z,
+
+			g.x, g.y, g.z, h.x, h.y, h.z, a.x, a.y, a.z,
+			g.x, g.y, g.z, a.x, a.y, a.z, b.x, b.y, b.z,
+
+			d.x, d.y, d.z, f.x, f.y, f.z, g.x, g.y, g.z,
+			d.x, d.y, d.z, g.x, g.y, g.z, b.x, b.y, b.z,
+
+			c.x, c.y, c.z, e.x, e.y, e.z, h.x, h.y, h.z,
+			c.x, c.y, c.z, h.x, h.y, h.z, a.x, a.y, a.z
+		};
+		const float* vertices = new float[3*8]{
+			a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z, d.x, d.y, d.z, // vertices in near face
+			e.x, e.y, e.z, f.x, f.y, f.z, g.x, g.y, g.z, h.x, h.y, h.z // vertices in far face
+		};
+
+		set_mat(cube, 3*2*6);
+	}
+
+	void robotGL::create_cuboid2(const robotSeg segment){
+		// create a cuboid for the segment passed - using indexing
+		// each cuboid has 6 faces, 2 triangles per face, 3 vertices per triangle (no indexing), 3 floats per vertex
+		float x,y,z,cx,cy,cz;
+		segment.get_dimensions(x,y,z);
+		segment.get_centre(cx, cy, cz);
+		
+		// lets define our cuboid faces use end quads bounded by vertices abcdefg
+		// a(l,0,0), b(l,w,0), c(l,0,h), d(l,w,h)
+		// h(0,0,0). g(0,w,0), e(0,0,h), f(0,w,h);
+		struct myvec3 {float x; float y; float z;};
+		myvec3 a{.x=x,.y=0,.z=0}, b{.x=x,.y=y,.z=0}, c{.x=x,.y=0,.z=z}, d{.x=x,.y=y,.z=z};
+		myvec3 h{.x=0,.y=0,.z=0}, g{.x=0,.y=y,.z=0}, e{.x=0,.y=0,.z=z}, f{.x=0,.y=y,.z=z};
+
+		// use an initializer list to fill values quickly, and presume successful;
+		const float* vertices = new float[3*8]{
+			a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z, d.x, d.y, d.z, // vertices in near face
+			e.x, e.y, e.z, f.x, f.y, f.z, g.x, g.y, g.z, h.x, h.y, h.z // vertices in far face
+		};
+		const float* indices = new float[]{
+			0, 1, 2, 1, 2, 3, // near face
+			2, 3, 4, 3, 4, 5, // top face
+			4, 5, 7, 5, 6, 7, // far face
+			6, 7, 1, 7, 1, 0, // bottom face
+			1, 3, 5, 1, 5, 6, // near side face
+			0, 2, 7, 2, 7, 5
+		};
+
+		if((vertices == NULL) || (indices ==NULL))
+			return;
+
+		set_mat2(vertices, indices, 8, 36);
+	}
+
+	void robotGL::glfw_resize_callback(GLFWwindow* window, int width, int height){
+		glViewport(0, 0, width, height);
+	}
+
+}// namespace
