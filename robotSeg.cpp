@@ -28,7 +28,6 @@ namespace samsRobot{
 	}
 	void robotSeg::set_dimensions(const float l, const float w, const float h){
 		size_x = l; size_y = w; size_z = h;
-		fprintf(stderr, "<%d>\tDims l = %02.2f, w = %02.2f, h = %02.2f\n", id, size_x, size_y, size_z);
 	}
 	void robotSeg::get_centre(float &x, float &y, float &z) const{
 		x = centre_x; y = centre_y; z = centre_y;
