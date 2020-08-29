@@ -128,20 +128,22 @@ namespace samsRobot{
 		glDeleteShader(this->vertex_shader);
 		glDeleteShader(this->fragment_shader);
 
-		// lets fill our matrices
+		// lets fill our matrices with some prelim data
 		delete this->vertex_data;
 		delete this->index_data;
 
 		this->vertex_data = new GLfloat[12]{
-			0.5f,  0.5f, 0.0f,  // top right
-			0.5f, -0.5f, 0.0f,  // bottom right
-			-0.5f, -0.5f, 0.0f,  // bottom left
-			-0.5f,  0.5f, 0.0f   // top left
+			// position	
+			0.5f,  0.5f, 0.0f, // top right
+			0.5f, -0.5f, 0.0f, // bottom right
+			-0.5f, -0.5f, 0.0f, // bottom left
+			-0.5f,  0.5f, 0.0f, // top left
 		};
 		this->index_data = new unsigned int[6]{  // note that we start from 0!
 			0, 1, 3,  // first Triangle
 			1, 2, 3   // second Triangle
 		};
+		seg[1].colour = glm::vec3(1,0,0);
 		this->numVertices = 4;
 		this->numIndices = 6;
 
@@ -149,23 +151,8 @@ namespace samsRobot{
 		glGenVertexArrays(1, &(this->VAO));
 		glGenBuffers(1, &(this->VBO));
 		glGenBuffers(1, &(this->EBO));
-
-		// bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
-		glBindVertexArray(this->VAO);
-		glBindBuffer(GL_ARRAY_BUFFER, this->VBO);
-		glBufferData(GL_ARRAY_BUFFER, 3*sizeof(float)*this->numVertices, this->vertex_data, GL_STATIC_DRAW);
-
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->EBO);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * numIndices, index_data, GL_STATIC_DRAW);
-		glVertexAttribPointer(
-				0, // index of the attribute
-				3, // size: number of components per attribute (1 to 4 permitted)
-				GL_FLOAT, // type
-				GL_FALSE, // normalized/clamped to [-1 1]
-				3 * sizeof(float), // stride: byte offset
-				(void*)0 // pointer to first element in array
-				);
-		glEnableVertexAttribArray(0); // enable the attribute array
+		
+		updateBuffers();
 
 		// note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
 		glBindBuffer(GL_ARRAY_BUFFER, 0); 
@@ -211,23 +198,8 @@ namespace samsRobot{
 			this->index_data[i] = idata[i];
 		this->numIndices = numIndices;
 
-		// bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
-		glBindVertexArray(this->VAO);
-		glBindBuffer(GL_ARRAY_BUFFER, this->VBO);
-		glBufferData(GL_ARRAY_BUFFER, 3*sizeof(float)*this->numVertices, this->vertex_data, GL_STATIC_DRAW);
-
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->EBO);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * numIndices, index_data, GL_STATIC_DRAW);
-		glVertexAttribPointer(
-				0, // index of the attribute
-				3, // size: number of components per attribute (1 to 4 permitted)
-				GL_FLOAT, // type
-				GL_FALSE, // normalized/clamped to [-1 1]
-				3 * sizeof(float), // stride: byte offset
-				(void*)0 // pointer to first element in array
-				);
-		glEnableVertexAttribArray(0); // enable the attribute array
-
+		// update buffers with new data
+		updateBuffers();
 
 
 	}
@@ -237,7 +209,6 @@ namespace samsRobot{
 		// first process inputs
 		// ----------------------
 		// Compute the MVP matrix from keyboard and mouse input
-		process_inputs();
 		computeMatricesFromInputs();
 		this->MVP = this->proj * this->view * this->model;
 
@@ -352,6 +323,23 @@ namespace samsRobot{
 		// Up vector
 		glm::vec3 up = glm::cross( right, direction );
 
+		// lets process inputs here - just because..
+
+		if (glfwGetKey(this->window, GLFW_KEY_ESCAPE) == GLFW_PRESS){
+			glfwSetWindowShouldClose(window, true);
+			prog_finished = true;
+		}
+		if (glfwGetKey(this->window, GLFW_KEY_Q ) == GLFW_PRESS){
+			prog_finished = true;
+		}
+		if(glfwGetKey(this->window, GLFW_KEY_R) == GLFW_PRESS){
+			reset_view();
+		}
+		if(glfwGetKey(this->window, GLFW_KEY_Z) == GLFW_PRESS){
+			toggle_wireframe();
+		}
+
+		// below is for camera/view control
 		// move up
 		if (glfwGetKey(this->window, GLFW_KEY_PAGE_UP ) == GLFW_PRESS){
 			position += direction * deltaTime * keys_speed;
@@ -377,6 +365,7 @@ namespace samsRobot{
 		if (glfwGetKey(this->window, GLFW_KEY_LEFT ) == GLFW_PRESS){
 			position -= right * deltaTime * keys_speed;
 		}
+
 
 		float FoV = initialFoV;// - 5 * glfwGetMouseWheel(); // Now GLFW 3 requires setting up a callback for this. It's a bit too complicated for this beginner's tutorial, so it's disabled instead.
 
@@ -426,8 +415,9 @@ namespace samsRobot{
 	void robotGL::create_cuboid(const robotSeg segment){
 		// create a cuboid for the segment passed - using indexing
 		// each cuboid has 6 faces, 2 triangles per face, 3 vertices per triangle (no indexing), 3 floats per vertex
-		float x,y,z,cx,cy,cz;
-		segment.get_dimensions(x,y,z);
+		float x,y,z,cr,cg,cb,cx,cy,cz;
+		segment.get_dimensions(x, y, z);
+		segment.get_colors(cr, cg, cb);
 		segment.get_centre(cx, cy, cz);
 		
 		// lets define our cuboid faces use end quads bounded by vertices abcdefg
@@ -439,8 +429,10 @@ namespace samsRobot{
 
 		// use an initializer list to fill values quickly, and presume successful;
 		const float* vertices = new float[3*8]{
-			a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z, d.x, d.y, d.z, // vertices in near face
-			e.x, e.y, e.z, f.x, f.y, f.z, g.x, g.y, g.z, h.x, h.y, h.z // vertices in far face
+			// vertices in near face
+			a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z, d.x, d.y, d.z, 
+			// vertices in far face
+			e.x, e.y, e.z, f.x, f.y, f.z, g.x, g.y, g.z, h.x, h.y, h.z 
 		};
 		const unsigned int* indices = new unsigned int[36]{
 			0, 1, 2, 1, 2, 3, // near face
@@ -457,6 +449,7 @@ namespace samsRobot{
 		}
 
 		set_mat(vertices, indices, 8, 36);
+		set_segProps(segment.getID(), glm::vec3(cr, cg, cb), glm::vec3(cx, cy, cz), glm::vec3(cr, cg, cb));
 	}
 
 	void robotGL::glfw_resize_callback(GLFWwindow* window, int width, int height){
@@ -465,19 +458,7 @@ namespace samsRobot{
 
 
 	void robotGL::process_inputs(void){
-		if (glfwGetKey(this->window, GLFW_KEY_ESCAPE) == GLFW_PRESS){
-			glfwSetWindowShouldClose(window, true);
-			prog_finished = true;
-		}
-		if (glfwGetKey(this->window, GLFW_KEY_Q ) == GLFW_PRESS){
-			prog_finished = true;
-		}
-		if(glfwGetKey(this->window, GLFW_KEY_R) == GLFW_PRESS){
-			reset_view();
-		}
-		if(glfwGetKey(this->window, GLFW_KEY_Z) == GLFW_PRESS){
-			toggle_wireframe();
-		}
+		// do nothing for now;
 	}
 
 	void robotGL::glfw_error_callback(int error, const char* desc){
@@ -497,4 +478,59 @@ namespace samsRobot{
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
 
+	void robotGL::updateBuffers(void){
+		// bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
+		glBindVertexArray(this->VAO);
+		glBindBuffer(GL_ARRAY_BUFFER, this->VBO);
+		glBufferData(GL_ARRAY_BUFFER, 6*sizeof(float)*this->numVertices, this->vertex_data, GL_STATIC_DRAW);
+
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->EBO);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * numIndices, index_data, GL_STATIC_DRAW);
+		glVertexAttribPointer(
+				0, // index of the attribute
+				3, // size: number of components per attribute (1 to 4 permitted)
+				GL_FLOAT, // type
+				GL_FALSE, // normalized/clamped to [-1 1]
+				3 * sizeof(float), // stride: byte offset
+				(void*)0 // pointer to first element in array
+				);
+		glEnableVertexAttribArray(0); // enable the attribute array
+
+		int colorLoc = glGetUniformLocation(this->programID, "inCol");
+		glUseProgram(this->programID);
+		for(unsigned int i = 0; i < MAX_NUM_SEGMENTS; i++){
+			glUniform3f(colorLoc, seg[1].colour.x, seg[1].colour.y, seg[1].colour.z);
+		}
+	}
+
+	void robotGL::set_segProps(const unsigned int id, const glm::vec3 col, const glm::vec3 centre, const glm::vec3 orient){
+
+		if(id > MAX_NUM_SEGMENTS) return;
+
+		seg[id].id = id; // should use a more clever unique id, really - this is redundant
+		seg[id].inUse = true;
+		seg[id].colour = col;
+		seg[id].centre = centre;
+		seg[id].orient = orient;
+	}
+
+	void robotGL::unset_segProps(const unsigned int id){
+
+		if(id > MAX_NUM_SEGMENTS) return;
+
+		seg[id].id = 0; // should use a more clever unique id, really - this is redundant
+		seg[id].inUse = false;
+		seg[id].colour = glm::vec3(0,0,0);
+		seg[id].centre = glm::vec3(0,0,0);
+		seg[id].orient = glm::vec3(0,0,0);
+	}
+
+	unsigned int robotGL::getNumValidSegs(void){
+		int x = 0;
+		for (int i = 0; i < MAX_NUM_SEGMENTS; i++){
+			if(seg[i].inUse == true)
+				x++;
+		}
+		return x;
+	}
 }// namespace

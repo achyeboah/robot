@@ -51,8 +51,8 @@ int main(int argc, char **argv)
 	int opt; // track options
 
 	// create robot here
-	seg1.setID(3);
-	seg1.set_dimensions(1,1,1);
+	seg1.setID(1);
+	seg1.set_dimensions(0.1,0.1,0.1);
 
 	if (argc < 2){
 		print_usage(argc, argv);
