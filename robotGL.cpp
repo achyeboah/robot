@@ -143,7 +143,7 @@ namespace samsRobot{
 			0, 1, 3,  // first Triangle
 			1, 2, 3   // second Triangle
 		};
-		seg[1].colour = glm::vec3(1,0,0);
+		seg[1].colour = glm::vec3(0,1,0);
 		this->numVertices = 4;
 		this->numIndices = 6;
 
@@ -158,10 +158,6 @@ namespace samsRobot{
 		glBindBuffer(GL_ARRAY_BUFFER, 0); 
 		// remember: do NOT unbind the EBO while a VAO is active as the bound element buffer object IS stored in the VAO; keep the EBO bound.
 		// glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-		// Get a handle for our "MVP" uniform
-		reset_view(); // this generates the model, view and proj matrices
-		this->matrixID = glGetUniformLocation(programID, "MVP");
 
 		// You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
 		// VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
@@ -208,13 +204,7 @@ namespace samsRobot{
 	void robotGL::update(void){
 		// first process inputs
 		// ----------------------
-		// Compute the MVP matrix from keyboard and mouse input
 		computeMatricesFromInputs();
-		this->MVP = this->proj * this->view * this->model;
-
-		// Send our transformation to the currently bound shader
-		// in the "MVP" uniform
-		glUniformMatrix4fv(this->matrixID, 1, GL_FALSE, &(this->MVP[0][0]));
 		//
 		// now draw the screen
 		// -------------------
@@ -226,8 +216,24 @@ namespace samsRobot{
 		glUseProgram(this->programID);
 
 		// draw the elements
-        	glBindVertexArray(this->VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
-        	glDrawElements(GL_TRIANGLES, this->numIndices, GL_UNSIGNED_INT, 0);  
+		glBindVertexArray(this->VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
+
+
+		// create transformations
+		glm::mat4 iview          = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
+		glm::mat4 iprojection    = glm::mat4(1.0f);
+		iprojection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+		iview       = glm::translate(iview, glm::vec3(0.0f, 0.0f, -10.0f));
+		glm::mat4 imodel = glm::mat4(1.0f);
+
+		int loc = glGetUniformLocation(this->programID, "view");
+		glUniformMatrix4fv(loc, 1, GL_FALSE, &(iview[0][0]));
+		loc = glGetUniformLocation(this->programID, "projection");
+		glUniformMatrix4fv(loc, 1, GL_FALSE, &(iprojection[0][0]));
+		loc = glGetUniformLocation(this->programID, "model");
+		glUniformMatrix4fv(loc, 1, GL_FALSE, &(imodel[0][0]));
+
+		glDrawElements(GL_TRIANGLES, this->numIndices, GL_UNSIGNED_INT, 0);  
 
 		// Swap buffers
 		glfwSwapBuffers(window);
@@ -258,17 +264,6 @@ namespace samsRobot{
 
 	void robotGL::set_bg(const float r, const float g, const float b, const float a){
 		glClearColor(r, g, b, a);
-	}
-
-	void robotGL::set_view(const glm::vec3 cam_pos, const glm::vec3 look_at_dir){
-		this->view       = glm::lookAt(cam_pos, look_at_dir, glm::vec3(0,1,0));
-		// Our ModelViewProjection : multiplication of our 3 matrices
-		this->MVP        = (this->proj) * (this->view) * (this->model); // Remember, matrix multiplication is the other way around
-	}
-
-	void robotGL::set_proj(const float fov, const float asp_ratio){
-		this->proj = glm::perspective(glm::radians(fov), asp_ratio, 0.1f, 100.0f);
-		this->MVP        = (this->proj) * (this->view) * (this->model); // Remember, matrix multiplication is the other way around
 	}
 
 	GLfloat* robotGL::get_mat(int& size) const{
@@ -370,7 +365,12 @@ namespace samsRobot{
 		float FoV = initialFoV;// - 5 * glfwGetMouseWheel(); // Now GLFW 3 requires setting up a callback for this. It's a bit too complicated for this beginner's tutorial, so it's disabled instead.
 
 		// Projection matrix : 45° Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
-		this->proj = glm::perspective(glm::radians(FoV), 4.0f / 3.0f, 0.1f, 100.0f);
+		this->proj = glm::perspective(
+				glm::radians(FoV), 
+				(float)SCR_WIDTH/(float)SCR_HEIGHT,
+				0.1f,
+			       	100.0f
+				);
 		// Camera matrix
 		this->view       = glm::lookAt(
 				position,           // Camera is here

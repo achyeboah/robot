@@ -52,7 +52,7 @@ int main(int argc, char **argv)
 
 	// create robot here
 	seg1.setID(1);
-	seg1.set_dimensions(0.1,0.1,0.1);
+	seg1.set_dimensions(1,1,1);
 
 	if (argc < 2){
 		print_usage(argc, argv);

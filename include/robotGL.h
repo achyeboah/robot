@@ -25,10 +25,13 @@ namespace samsRobot{
 		"#version 330 core\n"
 		"layout (location=0) in vec3 vPos;\n"
 		"uniform vec3 inCol;\n"
+		"uniform mat4 model;\n"
+		"uniform mat4 view;\n"
+		"uniform mat4 projection;\n"
 		"out vec3 outCol; // going to the fragment shader\n"
 		"void main()\n"
 		"{\n"
-		"    gl_Position = vec4(vPos, 1.0);\n"
+		"    gl_Position = projection * view * model * vec4(vPos, 1.0);\n"
 		"    outCol = inCol;\n"
 		"}\n\0";
 
@@ -65,7 +68,6 @@ namespace samsRobot{
 			glm::mat4 view;
 			glm::mat4 model;
 			glm::mat4 MVP;
-			
 
 			// items below should move into structure so they can be processed together in update loop
 			GLfloat* vertex_data;
@@ -90,7 +92,7 @@ namespace samsRobot{
 			segProps seg[MAX_NUM_SEGMENTS]; // allocate space for some segments
 
 		public:
-			robotGL(bool full = false);
+			robotGL(bool fullscreen = false);
 			~robotGL();
 
 			GLFWwindow* getWindow (void) const;
