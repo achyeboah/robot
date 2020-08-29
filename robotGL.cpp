@@ -22,7 +22,7 @@ namespace samsRobot{
 		mouse_wh_speed = 0.0f; //
 		set_wireframe(false);
 		if(this->init(do_fullscreen) != 0)
-			prog_finished = true;
+			stop();
 	}
 
 	int robotGL::init(bool do_fullscreen ){
@@ -71,11 +71,11 @@ namespace samsRobot{
 			return -1;
 		}
 		// disable mouse for fullscreen
-		if(monitor) glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		if(monitor) glfwSetInputMode(this->window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 		// use the context
 		glfwMakeContextCurrent(this->window);
-		glfwSetFramebufferSizeCallback(window, this->glfw_resize_callback);
+		glfwSetFramebufferSizeCallback(this->window, this->glfw_resize_callback);
 		glfwSwapInterval(1);
 
 		// Initialize GLEW
@@ -177,7 +177,7 @@ namespace samsRobot{
 
 		delete seg[id].vertex_data;
 		delete seg[id].index_data;
-		seg[id].vertex_data = new GLfloat[3*numVertices];
+		seg[id].vertex_data = new GLfloat[5*numVertices]; // 3 for position, 2 for texture
 		seg[id].index_data = new unsigned int[numIndices];
 
 		if((seg[id].vertex_data == NULL) || (seg[id].index_data == NULL)){
@@ -187,7 +187,7 @@ namespace samsRobot{
 			return;
 		}
 		int i = 0;
-		for(i = 0; i < 3*numVertices; i++){
+		for(i = 0; i < 5*numVertices; i++){
 			seg[id].vertex_data[i] = (GLfloat)vdata[i];
 		}
 		seg[id].numVertices = numVertices;
@@ -219,7 +219,6 @@ namespace samsRobot{
 		// draw the elements
 		glBindVertexArray(this->VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
 
-
 		// create transformations
 		glm::mat4 iview          = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
 		glm::mat4 iprojection    = glm::mat4(1.0f);
@@ -235,10 +234,9 @@ namespace samsRobot{
 		glUniformMatrix4fv(loc, 1, GL_FALSE, &(imodel[0][0]));
 		
 		for (int i = 0; i < MAX_NUM_SEGMENTS; i++){
-			if (this->seg[i].inUse == false)
-				break;
-			else
-				glDrawElements(GL_TRIANGLES, this->seg[1].numIndices, GL_UNSIGNED_INT, 0);  
+			if (this->seg[i].inUse == true){
+				glDrawElements(GL_TRIANGLES, this->seg[i].numIndices, GL_UNSIGNED_INT, 0);  
+			}
 		}
 
 		// Swap buffers
@@ -542,7 +540,7 @@ namespace samsRobot{
 		unsigned char *data = stbi_load("resources/1.png", &width, &height, &nrChannels, 0);
 		if (data)
 		{
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 			glGenerateMipmap(GL_TEXTURE_2D);
 		}
 		else

@@ -35,7 +35,7 @@ int motor_status = 0;
 
 // create just one segment to start with
 // global because accessed by multiple threads
-robotSeg seg1;
+robotSeg seg1, seg2;
 
 int main(int argc, char **argv)
 {
@@ -53,6 +53,12 @@ int main(int argc, char **argv)
 	// create robot here
 	seg1.setID(1);
 	seg1.set_dimensions(1,1,1);
+	seg1.set_colors(0.1,0.2,0.3);
+	seg1.set_centre(0.1,0.2,0.3);
+	seg2.setID(2);
+	seg2.set_dimensions(2,5,10);
+	seg2.set_colors(0.5,0.1,0.2);
+	seg2.set_centre(1,2.5,5);
 
 	if (argc < 2){
 		print_usage(argc, argv);
@@ -210,6 +216,7 @@ void* draw_graphics(void*){
 	// need to pass in some parameters
 	glWin.set_bg(0.0f, 0.3f, 0.3f, 0.5f);
 	glWin.create_cuboid(seg1);	
+	glWin.create_cuboid(seg2);	
 
 	do{
 	 	glWin.update();

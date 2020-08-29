@@ -50,8 +50,6 @@ namespace samsRobot{
 		"	color = texture(theTexture, outTex);\n"
 		"}\n\0";
 
-
-	///////
 	struct segProps{
 		unsigned int id; // just so we can make sure we're talking to right segment, taken from seg.id
 		bool inUse; // is this segment in use?
@@ -72,7 +70,6 @@ namespace samsRobot{
 			GLuint VAO, VBO, EBO; // buffer data	
 
 			// create the projection and view matrices
-			GLuint matrixID;
 			glm::mat4 proj;
 			glm::mat4 view;
 			glm::mat4 model;
@@ -103,6 +100,7 @@ namespace samsRobot{
 			int init(bool full = false);
 			void stop(void);
 			void update(void);
+			void updateBuffers(const unsigned int); 
 
 			void set_mat(const unsigned int id, const float* , const unsigned int*, const int , const int);
 			void set_view(const glm::vec3 cam_pos, const glm::vec3 look_at_dir);
@@ -133,7 +131,6 @@ namespace samsRobot{
 			static void glfw_resize_callback(GLFWwindow* window, int width, int height);
 			static void glfw_error_callback(int error, const char* desc);
 			void process_inputs();
-			void updateBuffers(const unsigned int); 
 	};
 
 }
