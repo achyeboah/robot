@@ -24,24 +24,30 @@ namespace samsRobot{
 	static const char* vertex_shader_text =
 		"#version 330 core\n"
 		"layout (location=0) in vec3 vPos;\n"
+		"layout (location=1) in vec2 vtex;\n"
 		"uniform vec3 inCol;\n"
 		"uniform mat4 model;\n"
 		"uniform mat4 view;\n"
 		"uniform mat4 projection;\n"
 		"out vec3 outCol; // going to the fragment shader\n"
+		"out vec2 outTex; \n"
 		"void main()\n"
 		"{\n"
 		"    gl_Position = projection * view * model * vec4(vPos, 1.0);\n"
 		"    outCol = inCol;\n"
+		"    outTex = vtex;\n"
 		"}\n\0";
 
 	static const char* fragment_shader_text =
 		"#version 330 core\n"
 		"in vec3 outCol;\n"
+		"in vec2 outTex;\n"
 		"out vec4 color;\n"
+		"uniform sampler2D theTexture;\n"
 		"void main()\n"
 		"{\n"
-		"	color = vec4(outCol, 1.0f);\n"
+		"	// color = vec4(outCol, 1.0f);\n"
+		"	color = texture(theTexture, outTex);\n"
 		"}\n\0";
 
 

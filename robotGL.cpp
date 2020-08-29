@@ -1,5 +1,8 @@
 #include "defs.h"
 #include "robotGL.h"
+// lets use Sean Barrett's texture loading code
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 // Include standard headers
 
@@ -427,7 +430,7 @@ namespace samsRobot{
 		myvec3 a{.x=x,.y=0,.z=0}, b{.x=x,.y=y,.z=0}, c{.x=x,.y=0,.z=z}, d{.x=x,.y=y,.z=z};
 		myvec3 h{.x=0,.y=0,.z=0}, g{.x=0,.y=y,.z=0}, e{.x=0,.y=0,.z=z}, f{.x=0,.y=y,.z=z};
 
-		// use an initializer list to fill values quickly, and presume successful;
+		// use an initializer list to fill values quickly, and presume memory allocated successfully;
 		const float* vertices = new float[3*8]{
 			// vertices in near face
 			a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z, d.x, d.y, d.z, 
@@ -495,6 +498,38 @@ namespace samsRobot{
 				(void*)0 // pointer to first element in array
 				);
 		glEnableVertexAttribArray(0); // enable the attribute array
+		// lets do texture
+		glVertexAttribPointer(
+				1, // index of the attribute
+				2, // size: number of components per attribute (1 to 4 permitted)
+				GL_FLOAT, // type
+				GL_FALSE, // normalized/clamped to [-1 1]
+				2 * sizeof(float), // stride: byte offset
+				(void*)0 // pointer to first element in array
+				);
+			glEnableVertexAttribArray(1); // enable the attribute array
+
+		// load the texture
+		unsigned int texture;
+		glGenTextures(1, &texture);
+		glBindTexture(GL_TEXTURE_2D, texture); // all upcoming GL_TEXTURE_2D operations now have effect on this texture object
+		// set the texture wrapping parameters
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		// set texture filtering parameters
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		// load image, create texture and generate mipmaps
+		int width, height, nrChannels;
+		unsigned char *data = stbi_load("resources/1.png", &width, &height, &nrChannels, 0);
+		if (data)
+		{
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+			glGenerateMipmap(GL_TEXTURE_2D);
+		}
+		else
+			fprintf(stderr, "robotGL::updateBuffers(): Failed to load texture!\n");
+		stbi_image_free(data);
 
 		int colorLoc = glGetUniformLocation(this->programID, "inCol");
 		glUseProgram(this->programID);

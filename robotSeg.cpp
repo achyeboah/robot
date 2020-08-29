@@ -7,9 +7,9 @@ namespace samsRobot{
 		size_x = 1.0f;
 		size_y = 1.0f;
 		size_z = 1.0f;
-		centre_x = 0.50f;
-		centre_y = 0.50f;
-		centre_z = 0.50f;
+		centre_x = size_x/2.0f;
+		centre_y = size_y/2.0f;
+		centre_z = size_z/2.0f;
 		col_r = 0.1f;
 		col_g = 0.1f;
 		col_b = 0.1f;
