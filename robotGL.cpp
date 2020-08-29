@@ -20,8 +20,6 @@ namespace samsRobot{
 		prog_finished = false;
 		keys_speed = 3.0f; // 3 units per second;
 		mouse_wh_speed = 0.0f; //
-		numVertices = 0;
-		numIndices = 0;
 		set_wireframe(false);
 		if(this->init(do_fullscreen) != 0)
 			prog_finished = true;
@@ -132,30 +130,31 @@ namespace samsRobot{
 		glDeleteShader(this->fragment_shader);
 
 		// lets fill our matrices with some prelim data
-		delete this->vertex_data;
-		delete this->index_data;
 
-		this->vertex_data = new GLfloat[12]{
+		seg[1].id = 1;
+		seg[1].inUse = true;
+
+		seg[1].vertex_data = new GLfloat[12]{
 			// position	
 			0.5f,  0.5f, 0.0f, // top right
 			0.5f, -0.5f, 0.0f, // bottom right
 			-0.5f, -0.5f, 0.0f, // bottom left
 			-0.5f,  0.5f, 0.0f, // top left
 		};
-		this->index_data = new unsigned int[6]{  // note that we start from 0!
+		seg[1].index_data = new unsigned int[6]{  // note that we start from 0!
 			0, 1, 3,  // first Triangle
 			1, 2, 3   // second Triangle
 		};
 		seg[1].colour = glm::vec3(0,1,0);
-		this->numVertices = 4;
-		this->numIndices = 6;
+		seg[1].numVertices = 4;
+		seg[1].numIndices = 6;
 
 		// bind our objects
 		glGenVertexArrays(1, &(this->VAO));
 		glGenBuffers(1, &(this->VBO));
 		glGenBuffers(1, &(this->EBO));
 		
-		updateBuffers();
+		updateBuffers(1);
 
 		// note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
 		glBindBuffer(GL_ARRAY_BUFFER, 0); 
@@ -171,35 +170,34 @@ namespace samsRobot{
 		return 0;
 	}	
 
-	void robotGL::set_mat(const float* vdata, const unsigned int* idata, const int numVertices, const int numIndices){
+	void robotGL::set_mat(const unsigned int id, const float* vdata, const unsigned int* idata, const int numVertices, const int numIndices){
 		// vertices. Three consecutive floats give a 3D vertex; Three consecutive vertices give a triangle.
 		// A cube has 6 faces with 2 triangles each, so this makes 6*2=12 triangles, and 12*3=36 vertices, 3*36=108 floats
 		// however we'll use indexing!
 
-		delete this->vertex_data;
-		delete this->index_data;
-		this->vertex_data = new GLfloat[3*numVertices];
-		this->index_data = new unsigned int[numIndices];
+		delete seg[id].vertex_data;
+		delete seg[id].index_data;
+		seg[id].vertex_data = new GLfloat[3*numVertices];
+		seg[id].index_data = new unsigned int[numIndices];
 
-		if((this->vertex_data == NULL) || (this->index_data == NULL)){
+		if((seg[id].vertex_data == NULL) || (seg[id].index_data == NULL)){
 			fprintf(stderr, "set_mat:: not enough memory\n");
-			this->numVertices = 0;
-			this->numIndices = 0;
+			seg[id].numVertices = 0;
+			seg[id].numIndices = 0;
 			return;
 		}
 		int i = 0;
 		for(i = 0; i < 3*numVertices; i++){
-			this->vertex_data[i] = (GLfloat)vdata[i];
+			seg[id].vertex_data[i] = (GLfloat)vdata[i];
 		}
-		this->numVertices = numVertices;
+		seg[id].numVertices = numVertices;
 
 		for(i = 0; i < numIndices; i++)
-			this->index_data[i] = idata[i];
-		this->numIndices = numIndices;
+			seg[id].index_data[i] = idata[i];
+		seg[id].numIndices = numIndices;
 
 		// update buffers with new data
-		updateBuffers();
-
+		updateBuffers(id);
 
 	}
 
@@ -235,8 +233,13 @@ namespace samsRobot{
 		glUniformMatrix4fv(loc, 1, GL_FALSE, &(iprojection[0][0]));
 		loc = glGetUniformLocation(this->programID, "model");
 		glUniformMatrix4fv(loc, 1, GL_FALSE, &(imodel[0][0]));
-
-		glDrawElements(GL_TRIANGLES, this->numIndices, GL_UNSIGNED_INT, 0);  
+		
+		for (int i = 0; i < MAX_NUM_SEGMENTS; i++){
+			if (this->seg[i].inUse == false)
+				break;
+			else
+				glDrawElements(GL_TRIANGLES, this->seg[1].numIndices, GL_UNSIGNED_INT, 0);  
+		}
 
 		// Swap buffers
 		glfwSwapBuffers(window);
@@ -245,8 +248,13 @@ namespace samsRobot{
 
 	robotGL::~robotGL(){
 		// cleanup vertex and index data
-		delete this->vertex_data;
-		delete this->index_data;
+		// delete this->vertex_data;
+		// delete this->index_data;
+		// delete should automatically be called when segments go out of existence but we'll be explicit
+		for (int i = 0; i < MAX_NUM_SEGMENTS; i++){
+			delete this->seg[i].vertex_data;
+			delete this->seg[i].index_data;
+		}
 
 		// release the vertex array
 		glBindVertexArray(0); 
@@ -269,14 +277,14 @@ namespace samsRobot{
 		glClearColor(r, g, b, a);
 	}
 
-	GLfloat* robotGL::get_mat(int& size) const{
-		size = this->numVertices;
-		return vertex_data;
+	GLfloat* robotGL::get_mat(const unsigned int id, int& size) const{
+		size = seg[id].numVertices;
+		return seg[id].vertex_data;
 	}
 
-	unsigned int* robotGL::get_ind(int& size) const{
-		size = this->numIndices;
-		return index_data;
+	unsigned int* robotGL::get_ind(const unsigned int id, int& size) const{
+		size = seg[id].numIndices;
+		return seg[id].index_data;
 	}
 
 	glm::mat4 robotGL::get_view() const {
@@ -458,7 +466,7 @@ namespace samsRobot{
 			return;
 		}
 
-		set_mat(vertices, indices, 8, 36);
+		set_mat(segment.getID(), vertices, indices, 8, 36);
 		set_segProps(segment.getID(), glm::vec3(cr, cg, cb), glm::vec3(cx, cy, cz), glm::vec3(cr, cg, cb));
 	}
 
@@ -488,14 +496,17 @@ namespace samsRobot{
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
 
-	void robotGL::updateBuffers(void){
+	void robotGL::updateBuffers(const unsigned int id){
+		if(this->seg[id].inUse == false)
+			return;
+
 		// bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
 		glBindVertexArray(this->VAO);
 		glBindBuffer(GL_ARRAY_BUFFER, this->VBO);
-		glBufferData(GL_ARRAY_BUFFER, 6*sizeof(float)*this->numVertices, this->vertex_data, GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, 6*sizeof(float)*this->seg[id].numVertices, seg[id].vertex_data, GL_STATIC_DRAW);
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->EBO);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * numIndices, index_data, GL_STATIC_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * this->seg[id].numIndices, seg[id].index_data, GL_STATIC_DRAW);
 		glVertexAttribPointer(
 				0, // index of the attribute
 				3, // size: number of components per attribute (1 to 4 permitted)

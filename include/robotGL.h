@@ -58,6 +58,9 @@ namespace samsRobot{
 		glm::vec3 colour; // contains the colours from the segment
 		glm::vec3 centre; // contains the centre (for translation) of the segment
 		glm::vec3 orient; // contains the orientation data (for rotations) of the segment
+		GLfloat* vertex_data; // vertex data (position, color and texture)
+		unsigned int* index_data; // actual float data
+		int numVertices, numIndices; // number of vertices and indices (not always equal!)
 	};
 
 	class robotGL{
@@ -74,11 +77,6 @@ namespace samsRobot{
 			glm::mat4 view;
 			glm::mat4 model;
 			glm::mat4 MVP;
-
-			// items below should move into structure so they can be processed together in update loop
-			GLfloat* vertex_data;
-			unsigned int* index_data; // actual float data
-			int numVertices, numIndices; // number of vertices and indices (not always equal!)
 
 			bool prog_finished;
 			bool modeWireframe;
@@ -106,14 +104,14 @@ namespace samsRobot{
 			void stop(void);
 			void update(void);
 
-			void set_mat(const float* , const unsigned int*, const int , const int);
+			void set_mat(const unsigned int id, const float* , const unsigned int*, const int , const int);
 			void set_view(const glm::vec3 cam_pos, const glm::vec3 look_at_dir);
 			void reset_view(void);
 			void set_proj(const float fov, const float asp_ratio);
 			void set_bg(const float r, const float g, const float b, const float a);
 
-			GLfloat* get_mat(int &size) const;
-			unsigned int* get_ind(int &size) const;
+			GLfloat* get_mat(const unsigned int id, int &size) const;
+			unsigned int* get_ind(const unsigned int id, int &size) const;
 
 			inline float get_keys_speed(void) const {return this->keys_speed;}
 			inline float get_mouse_wh_speed(void) const { return this->mouse_wh_speed;}
@@ -135,7 +133,7 @@ namespace samsRobot{
 			static void glfw_resize_callback(GLFWwindow* window, int width, int height);
 			static void glfw_error_callback(int error, const char* desc);
 			void process_inputs();
-			void updateBuffers(); 
+			void updateBuffers(const unsigned int); 
 	};
 
 }
