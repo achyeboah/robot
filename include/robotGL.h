@@ -6,6 +6,9 @@
 #define ROBOTGL_INIT_HANG 3.14f
 #define ROBOTGL_INIT_VANG 0.0f
 
+#define SCR_WIDTH 640
+#define SCR_HEIGHT 480
+
 // Include GLFW
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -68,11 +71,11 @@ namespace samsRobot{
 
 
 		public:
-			robotGL();
+			robotGL(bool full = false);
 			~robotGL();
 
 			GLFWwindow* getWindow (void) const;
-			int init(void);
+			int init(bool full = false);
 			void stop(void);
 			void update(void);
 

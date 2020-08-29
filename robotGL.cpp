@@ -13,21 +13,24 @@ using namespace glm;
 
 namespace samsRobot{
 
-	robotGL::robotGL(){
+	robotGL::robotGL(bool do_fullscreen){
 		prog_finished = false;
 		keys_speed = 3.0f; // 3 units per second;
 		mouse_wh_speed = 0.0f; //
 		numVertices = 0;
 		numIndices = 0;
 		set_wireframe(false);
-		if(this->init() != 0)
+		if(this->init(do_fullscreen) != 0)
 			prog_finished = true;
 	}
 
-	int robotGL::init( void ){
+	int robotGL::init(bool do_fullscreen ){
+		int width, height;
+		GLFWmonitor* monitor = NULL;
+
 		// provide an error callback
 		glfwSetErrorCallback(glfw_error_callback);	
-
+		
 		// Initialise GLFW
 		if( !glfwInit() )
 		{
@@ -36,19 +39,40 @@ namespace samsRobot{
 			return -1;
 		}
 
+		// process starting in fullscreen
+		if(do_fullscreen == true)
+			monitor = glfwGetPrimaryMonitor();
+		if(monitor){
+			const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+
+			glfwWindowHint(GLFW_RED_BITS, mode->redBits);
+			glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
+			glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
+			glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
+
+			width  = mode->width;
+			height = mode->height;
+		}else{
+			width  = SCR_WIDTH; height = SCR_HEIGHT;
+		}
+
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 		glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // To make MacOS happy; should not be needed
 		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 		// Open a window and create its OpenGL context
-		this->window = glfwCreateWindow( 800,600, "Robot Window", NULL, NULL);
+		this->window = glfwCreateWindow(width, height, "Robot Window", monitor, NULL);
 		if( window == NULL ){
 			fprintf( stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n" );
 			getchar();
 			glfwTerminate();
 			return -1;
 		}
+		// disable mouse for fullscreen
+		if(monitor) glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+		// use the context
 		glfwMakeContextCurrent(this->window);
 		glfwSetFramebufferSizeCallback(window, this->glfw_resize_callback);
 		glfwSwapInterval(1);

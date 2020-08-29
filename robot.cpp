@@ -26,56 +26,15 @@ void* draw_graphics(void*);
 // current user key, info returned from draw_curses();
 int current_key = 0;
 bool quit_gl = FALSE;
+bool do_fullscreen = FALSE;
 int previous_key = 0;
 float robotGL_fps = 0.0f;
 
 // current motor_status, info returned from drive_motors() and update_robot_status();
 int motor_status = 0;
 
-// lets create some axes - all in black, width of 0.01 unit
-static const float color_axis[] = {
-	0.01f
-};
-
-static const float vertex_data[] = { 
-	-1.0f,-1.0f,-1.0f,
-	-1.0f,-1.0f, 1.0f,
-	-1.0f, 1.0f, 1.0f,
-	1.0f, 1.0f,-1.0f,
-	-1.0f,-1.0f,-1.0f,
-	-1.0f, 1.0f,-1.0f,
-	1.0f,-1.0f, 1.0f,
-	-1.0f,-1.0f,-1.0f,
-	1.0f,-1.0f,-1.0f,
-	1.0f, 1.0f,-1.0f,
-	1.0f,-1.0f,-1.0f,
-	-1.0f,-1.0f,-1.0f,
-	-1.0f,-1.0f,-1.0f,
-	-1.0f, 1.0f, 1.0f,
-	-1.0f, 1.0f,-1.0f,
-	1.0f,-1.0f, 1.0f,
-	-1.0f,-1.0f, 1.0f,
-	-1.0f,-1.0f,-1.0f,
-	-1.0f, 1.0f, 1.0f,
-	-1.0f,-1.0f, 1.0f,
-	1.0f,-1.0f, 1.0f,
-	1.0f, 1.0f, 1.0f,
-	1.0f,-1.0f,-1.0f,
-	1.0f, 1.0f,-1.0f,
-	1.0f,-1.0f,-1.0f,
-	1.0f, 1.0f, 1.0f,
-	1.0f,-1.0f, 1.0f,
-	1.0f, 1.0f, 1.0f,
-	1.0f, 1.0f,-1.0f,
-	-1.0f, 1.0f,-1.0f,
-	1.0f, 1.0f, 1.0f,
-	-1.0f, 1.0f,-1.0f,
-	-1.0f, 1.0f, 1.0f,
-	1.0f, 1.0f, 1.0f,
-	-1.0f, 1.0f, 1.0f,
-	1.0f,-1.0f, 1.0f
-};
-
+// create just one segment to start with
+// global because accessed by multiple threads
 robotSeg seg1;
 
 int main(int argc, char **argv)
@@ -100,11 +59,16 @@ int main(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	}
 
-	while((opt = getopt(argc, argv, "cgCG")) != -1){
+	while((opt = getopt(argc, argv, "cfgCFG")) != -1){
 		switch(opt){
 			case 'c':
 			case 'C':
 				do_curses = TRUE;
+				break;
+			case 'f':
+			case 'F':
+				do_fullscreen = TRUE;
+				do_gl = TRUE;
 				break;
 			case 'g':
 			case 'G':
@@ -242,7 +206,7 @@ void init_motors(void){
 }
 
 void* draw_graphics(void*){
-	robotGL glWin;
+	robotGL glWin(do_fullscreen);
 	// need to pass in some parameters
 	glWin.set_bg(0.0f, 0.3f, 0.3f, 0.5f);
 	glWin.create_cuboid(seg1);	
@@ -269,10 +233,9 @@ void print_usage(int argc, char** argv){
 	printf("Please note that program %s is as follows. \n", argv[0]);
 	printf("\t-c\tUse NCurses window\n");
 	printf("\t-g\tUse openGL window\n");
+	printf("\t-f\tUse full screen (calls -g)\n");
 	printf("\nOptions may be combined eg (-gc)\n\n");
 	printf("Keys inside the application:\n");
-	printf("\tf\tToggle use full screen\n");
-	printf("\tw\tToggle use wireframe\n");
 	printf("\tLArrow\tMove camera left\n");
 	printf("\tRArrow\tMove camera right\n");
 	printf("\tUArrow\tMove camera up\n");
