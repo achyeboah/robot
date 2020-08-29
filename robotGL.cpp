@@ -226,7 +226,7 @@ namespace samsRobot{
 		glm::mat4 iview          = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
 		glm::mat4 iprojection    = glm::mat4(1.0f);
 		iprojection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-		iview       = glm::translate(iview, glm::vec3(0.0f, 0.0f, -10.0f));
+		iview       = glm::translate(iview, glm::vec3(0.0f, 0.0f, -5.0f));
 		glm::mat4 imodel = glm::mat4(1.0f);
 
 		int loc = glGetUniformLocation(this->programID, "view");
@@ -298,11 +298,11 @@ namespace samsRobot{
 		glfwGetCursorPos(window, &xpos, &ypos);
 
 		// Reset mouse position for next frame
-		glfwSetCursorPos(window, 800/2, 600/2);
+		glfwSetCursorPos(window, SCR_WIDTH/2, SCR_HEIGHT/2);
 
 		// Compute new orientation
-		horizontalAngle += mouse_wh_speed * float(800/2 - xpos );
-		verticalAngle   += mouse_wh_speed * float( 600/2 - ypos );
+		horizontalAngle += mouse_wh_speed * float(SCR_WIDTH/2 - xpos );
+		verticalAngle   += mouse_wh_speed * float(SCR_HEIGHT/2 - ypos );
 
 		// Direction : Spherical coordinates to Cartesian coordinates conversion
 		glm::vec3 direction(
@@ -431,11 +431,18 @@ namespace samsRobot{
 		myvec3 h{.x=0,.y=0,.z=0}, g{.x=0,.y=y,.z=0}, e{.x=0,.y=0,.z=z}, f{.x=0,.y=y,.z=z};
 
 		// use an initializer list to fill values quickly, and presume memory allocated successfully;
-		const float* vertices = new float[3*8]{
+		const float* vertices = new float[5*8]{
 			// vertices in near face
-			a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z, d.x, d.y, d.z, 
+			// position		// texture
+			a.x, a.y, a.z, 		0.0f, 0.0f,
+			b.x, b.y, b.z, 		1.0f, 0.0f,
+			c.x, c.y, c.z, 		0.0f, 1.0f,
+			d.x, d.y, d.z, 		1.0f, 1.0f, 
 			// vertices in far face
-			e.x, e.y, e.z, f.x, f.y, f.z, g.x, g.y, g.z, h.x, h.y, h.z 
+			e.x, e.y, e.z,		0.0f, 0.0f,
+		       	f.x, f.y, f.z,		1.0f, 0.0f,
+		       	g.x, g.y, g.z, 		0.0f, 1.0f,
+			h.x, h.y, h.z,		1.0f, 1.0f
 		};
 		const unsigned int* indices = new unsigned int[36]{
 			0, 1, 2, 1, 2, 3, // near face
@@ -494,7 +501,7 @@ namespace samsRobot{
 				3, // size: number of components per attribute (1 to 4 permitted)
 				GL_FLOAT, // type
 				GL_FALSE, // normalized/clamped to [-1 1]
-				3 * sizeof(float), // stride: byte offset
+				5 * sizeof(float), // stride: byte offset
 				(void*)0 // pointer to first element in array
 				);
 		glEnableVertexAttribArray(0); // enable the attribute array
@@ -504,10 +511,10 @@ namespace samsRobot{
 				2, // size: number of components per attribute (1 to 4 permitted)
 				GL_FLOAT, // type
 				GL_FALSE, // normalized/clamped to [-1 1]
-				2 * sizeof(float), // stride: byte offset
-				(void*)0 // pointer to first element in array
+				5 * sizeof(float), // stride: byte offset
+				(void*)(3*sizeof(float)) // pointer to first element in array
 				);
-			glEnableVertexAttribArray(1); // enable the attribute array
+		glEnableVertexAttribArray(1); // enable the attribute array
 
 		// load the texture
 		unsigned int texture;
