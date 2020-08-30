@@ -129,26 +129,6 @@ namespace samsRobot{
 		glDeleteShader(this->vertex_shader);
 		glDeleteShader(this->fragment_shader);
 
-		// lets fill our matrices with some prelim data
-
-		seg[1].id = 1;
-		seg[1].inUse = true;
-
-		seg[1].vertex_data = new GLfloat[12]{
-			// position	
-			0.5f,  0.5f, 0.0f, // top right
-			0.5f, -0.5f, 0.0f, // bottom right
-			-0.5f, -0.5f, 0.0f, // bottom left
-			-0.5f,  0.5f, 0.0f, // top left
-		};
-		seg[1].index_data = new unsigned int[6]{  // note that we start from 0!
-			0, 1, 3,  // first Triangle
-			1, 2, 3   // second Triangle
-		};
-		seg[1].colour = glm::vec3(0,1,0);
-		seg[1].numVertices = 4;
-		seg[1].numIndices = 6;
-
 		// bind our objects
 		glGenVertexArrays(1, &(this->VAO));
 		glGenBuffers(1, &(this->VBO));
@@ -202,10 +182,10 @@ namespace samsRobot{
 	}
 
 	// this function actually calls glDraw
-	void robotGL::update(void){
+	void robotGL::updateScreen(void){
 		// first process inputs
 		// ----------------------
-		computeMatricesFromInputs();
+		computeMatricesFromInputs(); // these not used at this time.
 		//
 		// now draw the screen
 		// -------------------
@@ -224,17 +204,22 @@ namespace samsRobot{
 		glm::mat4 iprojection    = glm::mat4(1.0f);
 		iprojection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 		iview       = glm::translate(iview, glm::vec3(0.0f, 0.0f, -5.0f));
-		glm::mat4 imodel = glm::mat4(1.0f);
 
 		int loc = glGetUniformLocation(this->programID, "view");
 		glUniformMatrix4fv(loc, 1, GL_FALSE, &(iview[0][0]));
 		loc = glGetUniformLocation(this->programID, "projection");
 		glUniformMatrix4fv(loc, 1, GL_FALSE, &(iprojection[0][0]));
-		loc = glGetUniformLocation(this->programID, "model");
-		glUniformMatrix4fv(loc, 1, GL_FALSE, &(imodel[0][0]));
+
+		// for each object, update shaders with its model matrix (ie transform it as appropriate)
 		
 		for (int i = 0; i < MAX_NUM_SEGMENTS; i++){
 			if (this->seg[i].inUse == true){
+				glm::mat4 imodel = glm::mat4(1.0f);
+				imodel = glm::translate(imodel, -seg[i].centre);
+				imodel = glm::rotate(imodel, glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f)); // add rotations later
+
+				loc = glGetUniformLocation(this->programID, "model");
+				glUniformMatrix4fv(loc, 1, GL_FALSE, &(imodel[0][0]));
 				glDrawElements(GL_TRIANGLES, this->seg[i].numIndices, GL_UNSIGNED_INT, 0);  
 			}
 		}
@@ -494,63 +479,66 @@ namespace samsRobot{
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
 
-	void robotGL::updateBuffers(const unsigned int id){
-		if(this->seg[id].inUse == false)
-			return;
+	void robotGL::updateBuffers(void){
+		for (int id = 0; id < MAX_NUM_SEGMENTS; id++){
 
-		// bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
-		glBindVertexArray(this->VAO);
-		glBindBuffer(GL_ARRAY_BUFFER, this->VBO);
-		glBufferData(GL_ARRAY_BUFFER, 6*sizeof(float)*this->seg[id].numVertices, seg[id].vertex_data, GL_STATIC_DRAW);
+			if(this->seg[id].inUse == false)
+				return;
 
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->EBO);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * this->seg[id].numIndices, seg[id].index_data, GL_STATIC_DRAW);
-		glVertexAttribPointer(
-				0, // index of the attribute
-				3, // size: number of components per attribute (1 to 4 permitted)
-				GL_FLOAT, // type
-				GL_FALSE, // normalized/clamped to [-1 1]
-				5 * sizeof(float), // stride: byte offset
-				(void*)0 // pointer to first element in array
-				);
-		glEnableVertexAttribArray(0); // enable the attribute array
-		// lets do texture
-		glVertexAttribPointer(
-				1, // index of the attribute
-				2, // size: number of components per attribute (1 to 4 permitted)
-				GL_FLOAT, // type
-				GL_FALSE, // normalized/clamped to [-1 1]
-				5 * sizeof(float), // stride: byte offset
-				(void*)(3*sizeof(float)) // pointer to first element in array
-				);
-		glEnableVertexAttribArray(1); // enable the attribute array
+			// bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
+			glBindVertexArray(this->VAO);
+			glBindBuffer(GL_ARRAY_BUFFER, this->VBO);
+			glBufferData(GL_ARRAY_BUFFER, 6*sizeof(float)*this->seg[id].numVertices, seg[id].vertex_data, GL_STATIC_DRAW);
 
-		// load the texture
-		unsigned int texture;
-		glGenTextures(1, &texture);
-		glBindTexture(GL_TEXTURE_2D, texture); // all upcoming GL_TEXTURE_2D operations now have effect on this texture object
-		// set the texture wrapping parameters
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		// set texture filtering parameters
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		// load image, create texture and generate mipmaps
-		int width, height, nrChannels;
-		unsigned char *data = stbi_load("resources/1.png", &width, &height, &nrChannels, 0);
-		if (data)
-		{
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-			glGenerateMipmap(GL_TEXTURE_2D);
-		}
-		else
-			fprintf(stderr, "robotGL::updateBuffers(): Failed to load texture!\n");
-		stbi_image_free(data);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->EBO);
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * this->seg[id].numIndices, seg[id].index_data, GL_STATIC_DRAW);
+			glVertexAttribPointer(
+					0, // index of the attribute
+					3, // size: number of components per attribute (1 to 4 permitted)
+					GL_FLOAT, // type
+					GL_FALSE, // normalized/clamped to [-1 1]
+					5 * sizeof(float), // stride: byte offset
+					(void*)0 // pointer to first element in array
+					);
+			glEnableVertexAttribArray(0); // enable the attribute array
+			// lets do texture
+			glVertexAttribPointer(
+					1, // index of the attribute
+					2, // size: number of components per attribute (1 to 4 permitted)
+					GL_FLOAT, // type
+					GL_FALSE, // normalized/clamped to [-1 1]
+					5 * sizeof(float), // stride: byte offset
+					(void*)(3*sizeof(float)) // pointer to first element in array
+					);
+			glEnableVertexAttribArray(1); // enable the attribute array
 
-		int colorLoc = glGetUniformLocation(this->programID, "inCol");
-		glUseProgram(this->programID);
-		for(unsigned int i = 0; i < MAX_NUM_SEGMENTS; i++){
-			glUniform3f(colorLoc, seg[1].colour.x, seg[1].colour.y, seg[1].colour.z);
+			// load the texture
+			unsigned int texture;
+			glGenTextures(1, &texture);
+			glBindTexture(GL_TEXTURE_2D, texture); // all upcoming GL_TEXTURE_2D operations now have effect on this texture object
+			// set the texture wrapping parameters
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+			// set texture filtering parameters
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			// load image, create texture and generate mipmaps
+			int width, height, nrChannels;
+			unsigned char *data = stbi_load("resources/1.png", &width, &height, &nrChannels, 0);
+			if (data)
+			{
+				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+				glGenerateMipmap(GL_TEXTURE_2D);
+			}
+			else
+				fprintf(stderr, "robotGL::updateBuffers(): Failed to load texture!\n");
+			stbi_image_free(data);
+
+			int colorLoc = glGetUniformLocation(this->programID, "inCol");
+			glUseProgram(this->programID);
+			for(unsigned int i = 0; i < MAX_NUM_SEGMENTS; i++){
+				glUniform3f(colorLoc, seg[1].colour.x, seg[1].colour.y, seg[1].colour.z);
+			}
 		}
 	}
 

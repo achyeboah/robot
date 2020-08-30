@@ -99,8 +99,8 @@ namespace samsRobot{
 			GLFWwindow* getWindow (void) const;
 			int init(bool full = false);
 			void stop(void);
-			void update(void);
-			void updateBuffers(const unsigned int); 
+			void updateScreen(void);
+			void updateBuffers(void); 
 
 			void set_mat(const unsigned int id, const float* , const unsigned int*, const int , const int);
 			void set_view(const glm::vec3 cam_pos, const glm::vec3 look_at_dir);
