@@ -23,9 +23,7 @@ namespace samsRobot{
 		set_wireframe(false);
 		fps = 0;
 
-		cameraPos   = glm::vec3(0.0f, 0.0f, 5.0f);
-		cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-		cameraUp    = glm::vec3(0.0f, 1.0f, 0.0f);
+		reset_view();
 
 		if(this->init(do_fullscreen) != 0)
 			stop();
@@ -164,12 +162,13 @@ namespace samsRobot{
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		// load image, create texture and generate mipmaps
 		int nrChannels;
+		// stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
 		unsigned char *data = stbi_load("resources/1.png", &width, &height, &nrChannels, 0);
 		if (data){
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 			glGenerateMipmap(GL_TEXTURE_2D);
 		}else
-			fprintf(stderr, "robotGL::updateBuffers(): Failed to load texture!\n");
+			fprintf(stderr, "robotGL::init(): Failed to load texture!\n");
 		stbi_image_free(data);
 
 		int loc = glGetUniformLocation(this->programID, "theTexture");
@@ -258,17 +257,22 @@ namespace samsRobot{
 		for (int i = 0; i < MAX_NUM_SEGMENTS; i++){
 			if (this->seg[i].inUse == true){
 				// lets make sure we're putting the data in the right place - ie before we load it into VBO
-				//
-				glm::mat4 imodel = glm::mat4(1.0f);
-				// check if this has a parent, and translate it such that it is centred (for rotation) around the pivot of the parent, else use the given centre
-				// if (seg[i].parent != NULL)
-				// imodel = glm::translate(imode, -seg[i].getParent().pivot);
-				// else
-				imodel = glm::translate(imodel, -seg[i].centre);
-				imodel = glm::rotate(imodel, glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f)); // add rotations later
+				glm::mat4 model = glm::mat4(1.0f);
+				// just for jokes
+				// if (i == 2) model = glm::rotate(model, glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f)); // add rotations later based on IMU info
+
+				// check if this has a parent (ie a non-zero parent id)
+				// and translate it such that it is centred (for rotation) around the pivot of the parent, else use the given centre
+				// check its valid and check that parent has been loaded for use
+				if((seg[i].parentid != 0) && (seg[seg[i].parentid].inUse == true)){
+					glm::vec3 temp = seg[seg[i].parentid].pivot;
+					model = glm::translate(model, temp); 
+				}
+				else
+					model = glm::translate(model, -seg[i].centre);
 
 				loc = glGetUniformLocation(this->programID, "model");
-				glUniformMatrix4fv(loc, 1, GL_FALSE, &(imodel[0][0]));
+				glUniformMatrix4fv(loc, 1, GL_FALSE, &(model[0][0]));
 
 				// load the data into the VBO
 
@@ -359,7 +363,10 @@ namespace samsRobot{
 	}
 
 	void robotGL::reset_view(void){
-		glfw_resize_callback(this->window, SCR_WIDTH, SCR_HEIGHT);
+		cameraPos   = glm::vec3(0.0f, 0.0f, 10.0f);
+		cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+		cameraUp    = glm::vec3(0.0f, 1.0f, 0.0f);
+		// glfw_resize_callback(this->window, SCR_WIDTH, SCR_HEIGHT);
 	}
 
 	void robotGL::create_cuboid(const robotSeg segment){
@@ -407,7 +414,7 @@ namespace samsRobot{
 		}
 
 		set_mat(segment.getID(), vertices, indices, 8, 36);
-		set_segProps(segment.getID(), glm::vec3(cr, cg, cb), glm::vec3(cx, cy, cz), glm::vec3(px, py, pz), glm::vec3(cr, cg, cb));
+		set_segProps(segment.getID(), glm::vec3(cr, cg, cb), glm::vec3(cx, cy, cz), glm::vec3(px, py, pz), glm::vec3(cr, cg, cb), segment.getParentID());
 		
 		// clean up
 		delete vertices;
@@ -449,7 +456,7 @@ namespace samsRobot{
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
 
-	void robotGL::set_segProps(const unsigned int id, const glm::vec3 col, const glm::vec3 centre, const glm::vec3 pivot, const glm::vec3 orient){
+	void robotGL::set_segProps(const unsigned int id, const glm::vec3 col, const glm::vec3 centre, const glm::vec3 pivot, const glm::vec3 orient, const unsigned int parentID){
 
 		if((id < 0) || (id >= MAX_NUM_SEGMENTS)) return;
 
@@ -459,6 +466,7 @@ namespace samsRobot{
 		seg[id].centre = centre;
 		seg[id].pivot = pivot;
 		seg[id].orient = orient;
+		seg[id].parentid = parentID;
 
 		this->numValidSegs++;
 	}
@@ -487,7 +495,7 @@ namespace samsRobot{
 			deltatime = 0.001;
 		fps = 1.0f/deltatime;
 
-		float cameraSpeed = 5.0f * deltatime;
+		float cameraSpeed = 1.0f * deltatime;
 
 		if (glfwGetKey(this->window, GLFW_KEY_Z) == GLFW_PRESS)
 			toggle_wireframe();
@@ -499,14 +507,16 @@ namespace samsRobot{
 
 		// keys below move the camera position, mouse affects lookat and zoom
 		if (glfwGetKey(this->window, GLFW_KEY_UP) == GLFW_PRESS)
-			this->cameraPos += cameraSpeed * cameraFront;
+			this->cameraPos -= (this->cameraUp)*cameraSpeed;
 		if (glfwGetKey(this->window, GLFW_KEY_DOWN) == GLFW_PRESS)
-			this->cameraPos -= cameraSpeed * cameraFront;
+			this->cameraPos += (this->cameraUp)*cameraSpeed;
 		if (glfwGetKey(this->window, GLFW_KEY_LEFT) == GLFW_PRESS)
 			this->cameraPos -= glm::normalize(glm::cross(this->cameraFront, this->cameraUp)) * cameraSpeed;
 		if (glfwGetKey(this->window, GLFW_KEY_RIGHT) == GLFW_PRESS)
 			this->cameraPos += glm::normalize(glm::cross(this->cameraFront, this->cameraUp)) * cameraSpeed;
-		if (glfwGetKey(this->window, GLFW_KEY_PAGE_UP) == GLFW_PRESS) ;
-		if (glfwGetKey(this->window, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS) ;
+		if (glfwGetKey(this->window, GLFW_KEY_PAGE_UP) == GLFW_PRESS)
+			this->cameraPos += cameraSpeed * cameraFront;
+		if (glfwGetKey(this->window, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS)
+			this->cameraPos -= cameraSpeed * cameraFront;
 	}
 }// namespace

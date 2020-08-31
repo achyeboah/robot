@@ -55,10 +55,16 @@ namespace samsRobot{
 		col_r = r; col_g = g; col_b = b;
 	}
 
-	robotSeg* robotSeg::getParent(void) const{ return this->parent;}
 	void robotSeg::setParent(robotSeg* parent){ this->parent = parent;}
+	robotSeg* robotSeg::getParent(void) const{ return this->parent;}
+	unsigned int robotSeg::getParentID(void) const {
+		if(this->getParent() != NULL)
+			return (this->getParent())->getID();
+		else
+			return 0;
+	}
 
-	int robotSeg::getID(void) const {return this->id;}
-	void robotSeg::setID(const int id){this->id = id;}
+	unsigned int robotSeg::getID(void) const {return this->id;}
+	void robotSeg::setID(const unsigned int id){this->id = id;}
 };
 

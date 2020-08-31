@@ -52,13 +52,15 @@ int main(int argc, char **argv)
 
 	// create robot here
 	seg1.setID(1);
-	seg1.set_dimensions(0.5,0.2,1);
+	seg1.set_dimensions(3,1,1);
+	seg1.set_centre(0.5,1,0.5);
+	seg1.set_pivot(2.9,0.5,0.5);
 	seg1.set_colors(0.1,0.2,0.3);
-	seg1.set_centre(0.1,0.2,0.3);
 	seg2.setID(2);
-	seg2.set_dimensions(0.2,0.5,1);
+	seg2.set_dimensions(2,1,1);
+	seg2.set_centre(1,0.5,0.5);
+	seg2.set_pivot(1.9,0.5,0.5);
 	seg2.set_colors(0.5,0.1,0.2);
-	seg2.set_centre(1,2.5,5);
 	seg2.setParent(&seg1);
 
 	if (argc < 2){

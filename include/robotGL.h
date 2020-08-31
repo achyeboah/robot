@@ -51,6 +51,7 @@ namespace samsRobot{
 
 	struct segProps{
 		unsigned int id; // just so we can make sure we're talking to right segment, taken from seg.id
+		unsigned int parentid; // allows us to place this in position relative to its parent pivot point
 		bool inUse; // is this segment in use?
 		glm::vec3 colour; // contains the colours from the segment
 		glm::vec3 pivot; // contains the pivot (for translation of any child)
@@ -90,17 +91,10 @@ namespace samsRobot{
 
 			GLFWwindow* getWindow (void) const;
 			int init(bool full = false);
-			void stop(void);
-			void updateScreen(void);
-			void updateBuffers(void); 
 
-			void set_mat(const unsigned int id, const float* ,const unsigned int*, const int , const int);
+			void updateScreen(void);
 			void reset_view(void);
 			void set_bg(const float r, const float g, const float b, const float a);
-
-			GLfloat* get_mat(const unsigned int id, int &size) const;
-			unsigned int* get_ind(const unsigned int id, int &size) const;
-
 			inline bool get_wireframe(void) const {return modeWireframe;}
 			void set_wireframe(const bool mode);
 			void toggle_wireframe(void);
@@ -109,16 +103,20 @@ namespace samsRobot{
 			inline float get_fps(void){return this->fps;}
 			inline bool get_progFinished(void){return this->prog_finished;}
 
-			void computeMatricesFromInputs(void);
 			void create_cuboid(const robotSeg segment);
-			void set_segProps(const unsigned int id, const glm::vec3 col, const glm::vec3 centre, const glm::vec3 pivot, const glm::vec3 orient);
+			void set_mat(const unsigned int id, const float* ,const unsigned int*, const int , const int);
+			void set_segProps(const unsigned int id, const glm::vec3 col, const glm::vec3 centre, const glm::vec3 pivot, const glm::vec3 orient, const unsigned int parentid = 0);
+			GLfloat* get_mat(const unsigned int id, int &size) const;
+			unsigned int* get_ind(const unsigned int id, int &size) const;
 			void unset_segProps(const unsigned int id);
 			inline unsigned int getNumValidSegs(void){ return numValidSegs;}
 
 			// callbacks
 			static void glfw_resize_callback(GLFWwindow* window, int width, int height);
 			static void glfw_error_callback(int error, const char* desc);
+			void stop(void);
 			// static void glfw_key_callback(GLFWwindow* window, int key, int scanmode, int action, int modifier);
+			
 			void process_inputs(void); 
 	};
 

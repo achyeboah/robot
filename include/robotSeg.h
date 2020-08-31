@@ -23,7 +23,7 @@ namespace samsRobot{
 			robotSeg* parent;
 
 			// hopefully unique id
-			int id;
+			unsigned int id;
 
 		public:
 			robotSeg(); // presumes dimensions are 1,1,1, color red, centred around origin
@@ -40,10 +40,11 @@ namespace samsRobot{
 			void set_colors(const float r, const float g, const float b);
 
 			robotSeg* getParent(void) const;
+			unsigned int getParentID(void) const;
 			void setParent(robotSeg* parent);
 
-			int getID(void) const;
-			void setID(const int id);
+			unsigned int getID(void) const;
+			void setID(const unsigned int id);
 			};
 }
 #endif
