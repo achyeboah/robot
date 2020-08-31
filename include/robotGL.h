@@ -78,6 +78,7 @@ namespace samsRobot{
 
 			bool prog_finished;
 			bool modeWireframe;
+			float prevtime;
 			float fps; // track how fast we're updating screen
 
 			// use these to compute user interaction (accessed by a static callback)

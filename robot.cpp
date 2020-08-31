@@ -222,7 +222,7 @@ void* draw_graphics(void*){
 	do{
 	 	glWin.updateScreen();
 		robotGL_fps = glWin.get_fps();
-		usleep(50000); // achieving 80fps with 10ms sleep, 20fps with 50ms sleep
+		usleep(20000); // achieving 80fps with 10ms sleep, 20fps with 50ms sleep
 	}while(glWin.get_progFinished() == FALSE);
 
 	// send a message to other threads that its time to quit!

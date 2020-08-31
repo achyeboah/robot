@@ -21,6 +21,7 @@ namespace samsRobot{
 	robotGL::robotGL(bool do_fullscreen){
 		prog_finished = false;
 		set_wireframe(false);
+		fps = 0;
 		if(this->init(do_fullscreen) != 0)
 			stop();
 	}
@@ -103,7 +104,7 @@ namespace samsRobot{
 		glfwSetCursorPos(window, SCR_WIDTH/2, SCR_HEIGHT/2);
 
 		// Dark blue background by default
-		glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
+		glClearColor(0.0f, 0.0f, 0.1f, 0.2f);
 
 		// Enable depth test
 		glEnable(GL_DEPTH_TEST);
@@ -178,7 +179,7 @@ namespace samsRobot{
 		// VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
 		// glBindVertexArray(0); 
 		
-		set_bg(1.0f, 0.3f, 0.3f, 1.0f);
+		glfwSetTime(0.0f);
 
 		return 0;
 	}	
@@ -218,6 +219,14 @@ namespace samsRobot{
 	// this function actually calls glDraw
 	void robotGL::updateScreen(void){
 		process_inputs();
+		// track time
+		float currtime = glfwGetTime();
+		float deltatime = currtime - this->prevtime;
+		this->prevtime = currtime;
+		if (deltatime < 0.0001)
+			deltatime = 0.001;
+		fps = 1.0f/deltatime;
+
 
 		// Clear the screen
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
