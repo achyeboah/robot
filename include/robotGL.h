@@ -70,11 +70,7 @@ namespace samsRobot{
 			GLuint VAO, VBO, EBO; // handles for array, buffer and index data	
 			unsigned int texture; // handle for texture data
 
-			// create the projection and view matrices
-			glm::mat4 proj;
-			glm::mat4 view;
-			glm::mat4 model;
-			glm::mat4 MVP;
+			glm::vec3 cameraPos, cameraFront, cameraUp;
 
 			bool prog_finished;
 			bool modeWireframe;
@@ -99,9 +95,7 @@ namespace samsRobot{
 			void updateBuffers(void); 
 
 			void set_mat(const unsigned int id, const float* ,const unsigned int*, const int , const int);
-			void set_view(const glm::vec3 cam_pos, const glm::vec3 look_at_dir);
 			void reset_view(void);
-			void set_proj(const float fov, const float asp_ratio);
 			void set_bg(const float r, const float g, const float b, const float a);
 
 			GLfloat* get_mat(const unsigned int id, int &size) const;

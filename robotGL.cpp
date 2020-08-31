@@ -22,6 +22,11 @@ namespace samsRobot{
 		prog_finished = false;
 		set_wireframe(false);
 		fps = 0;
+
+		cameraPos   = glm::vec3(0.0f, 0.0f, 5.0f);
+		cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+		cameraUp    = glm::vec3(0.0f, 1.0f, 0.0f);
+
 		if(this->init(do_fullscreen) != 0)
 			stop();
 	}
@@ -219,14 +224,6 @@ namespace samsRobot{
 	// this function actually calls glDraw
 	void robotGL::updateScreen(void){
 		process_inputs();
-		// track time
-		float currtime = glfwGetTime();
-		float deltatime = currtime - this->prevtime;
-		this->prevtime = currtime;
-		if (deltatime < 0.0001)
-			deltatime = 0.001;
-		fps = 1.0f/deltatime;
-
 
 		// Clear the screen
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -241,16 +238,16 @@ namespace samsRobot{
 		// draw the elements
 		glBindVertexArray(this->VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
 
-		// create transformations
-		glm::mat4 iview          = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
+		// create MVP transformations
 		glm::mat4 iprojection    = glm::mat4(1.0f);
 		iprojection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-		iview       = glm::translate(iview, glm::vec3(0.0f, 0.0f, -5.0f));
-
-		int loc = glGetUniformLocation(this->programID, "view");
-		glUniformMatrix4fv(loc, 1, GL_FALSE, &(iview[0][0]));
-		loc = glGetUniformLocation(this->programID, "projection");
+		int loc = glGetUniformLocation(this->programID, "projection");
 		glUniformMatrix4fv(loc, 1, GL_FALSE, &(iprojection[0][0]));
+
+	        glm::mat4 view = glm::lookAt(this->cameraPos, this->cameraPos + this->cameraFront, this->cameraUp);
+		loc = glGetUniformLocation(this->programID, "view");
+		glUniformMatrix4fv(loc, 1, GL_FALSE, &(view[0][0]));
+
 
 		// bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
 		glBindVertexArray(this->VAO);
@@ -359,10 +356,6 @@ namespace samsRobot{
 		       return NULL;
 		size = seg[id].numIndices;
 		return seg[id].index_data;
-	}
-
-	glm::mat4 robotGL::get_view() const {
-		return this->view;
 	}
 
 	void robotGL::reset_view(void){
@@ -486,7 +479,15 @@ namespace samsRobot{
 	// void robotGL::glfw_key_callback(GLFWwindow* window, int key, int scanmode, int action, int modifier){
 	void robotGL::process_inputs(void){
 
-		float view_change = 5.0f;
+		// track time
+		float currtime = glfwGetTime();
+		float deltatime = currtime - this->prevtime;
+		this->prevtime = currtime;
+		if (deltatime < 0.0001)
+			deltatime = 0.001;
+		fps = 1.0f/deltatime;
+
+		float cameraSpeed = 5.0f * deltatime;
 
 		if (glfwGetKey(this->window, GLFW_KEY_Z) == GLFW_PRESS)
 			toggle_wireframe();
@@ -496,17 +497,16 @@ namespace samsRobot{
 		if(glfwGetKey(this->window, GLFW_KEY_R) == GLFW_PRESS)
 			reset_view();
 
+		// keys below move the camera position, mouse affects lookat and zoom
 		if (glfwGetKey(this->window, GLFW_KEY_UP) == GLFW_PRESS)
-			this->view_rotx += view_change;
+			this->cameraPos += cameraSpeed * cameraFront;
 		if (glfwGetKey(this->window, GLFW_KEY_DOWN) == GLFW_PRESS)
-			this->view_rotx -= view_change;
+			this->cameraPos -= cameraSpeed * cameraFront;
 		if (glfwGetKey(this->window, GLFW_KEY_LEFT) == GLFW_PRESS)
-			this->view_roty -= view_change;
+			this->cameraPos -= glm::normalize(glm::cross(this->cameraFront, this->cameraUp)) * cameraSpeed;
 		if (glfwGetKey(this->window, GLFW_KEY_RIGHT) == GLFW_PRESS)
-			this->view_roty += view_change;
-		if (glfwGetKey(this->window, GLFW_KEY_PAGE_UP) == GLFW_PRESS)
-			this->view_rotz += view_change;
-		if (glfwGetKey(this->window, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS)
-			this->view_rotz -= view_change;
+			this->cameraPos += glm::normalize(glm::cross(this->cameraFront, this->cameraUp)) * cameraSpeed;
+		if (glfwGetKey(this->window, GLFW_KEY_PAGE_UP) == GLFW_PRESS) ;
+		if (glfwGetKey(this->window, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS) ;
 	}
 }// namespace
