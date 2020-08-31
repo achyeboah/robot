@@ -24,8 +24,8 @@ namespace samsRobot{
 	static const char* vertex_shader_text =
 		"#version 330 core\n"
 		"layout (location=0) in vec3 vPos;\n"
-		"layout (location=1) in vec2 vtex;\n"
-		"uniform vec3 inCol;\n"
+		"layout (location=1) in vec3 vCol;\n"
+		"layout (location=2) in vec2 vtex;\n"
 		"uniform mat4 model;\n"
 		"uniform mat4 view;\n"
 		"uniform mat4 projection;\n"
@@ -34,7 +34,7 @@ namespace samsRobot{
 		"void main()\n"
 		"{\n"
 		"    gl_Position = projection * view * model * vec4(vPos, 1.0);\n"
-		"    outCol = inCol;\n"
+		"    outCol = vCol;\n"
 		"    outTex = vtex;\n"
 		"}\n\0";
 
@@ -46,14 +46,14 @@ namespace samsRobot{
 		"uniform sampler2D theTexture;\n"
 		"void main()\n"
 		"{\n"
-		"	// color = vec4(outCol, 1.0f);\n"
-		"	color = texture(theTexture, outTex);\n"
+		"	color = texture(theTexture, outTex) * vec4(outCol, 1.0f);\n"
 		"}\n\0";
 
 	struct segProps{
 		unsigned int id; // just so we can make sure we're talking to right segment, taken from seg.id
 		bool inUse; // is this segment in use?
 		glm::vec3 colour; // contains the colours from the segment
+		glm::vec3 pivot; // contains the pivot (for translation of any child)
 		glm::vec3 centre; // contains the centre (for translation) of the segment
 		glm::vec3 orient; // contains the orientation data (for rotations) of the segment
 		GLfloat* vertex_data; // vertex data (position, color and texture)
@@ -67,7 +67,8 @@ namespace samsRobot{
 			GLuint programID;
 			GLuint fragment_shader;
 			GLuint vertex_shader;
-			GLuint VAO, VBO, EBO; // buffer data	
+			GLuint VAO, VBO, EBO; // handles for array, buffer and index data	
+			unsigned int texture; // handle for texture data
 
 			// create the projection and view matrices
 			glm::mat4 proj;
@@ -77,20 +78,14 @@ namespace samsRobot{
 
 			bool prog_finished;
 			bool modeWireframe;
-			float mouse_wh_speed, keys_speed;
 			float fps; // track how fast we're updating screen
 
-			// use these to compute user interaction
-			// Initial position : on +Z
-			glm::vec3 position = ROBOTGL_INIT_POS; 
-			// Initial horizontal angle : toward -Z
-			float horizontalAngle = ROBOTGL_INIT_HANG;
-			// Initial vertical angle : none
-			float verticalAngle = ROBOTGL_INIT_VANG;
-			// Initial Field of View
-			float initialFoV = ROBOTGL_INIT_FOV;
+			// use these to compute user interaction (accessed by a static callback)
+			float view_rotx, view_roty, view_rotz;
 
+			// each seg contains a unique robot segment
 			segProps seg[MAX_NUM_SEGMENTS]; // allocate space for some segments
+			unsigned int numValidSegs; // number of valid segments
 
 		public:
 			robotGL(bool fullscreen = false);
@@ -102,7 +97,7 @@ namespace samsRobot{
 			void updateScreen(void);
 			void updateBuffers(void); 
 
-			void set_mat(const unsigned int id, const float* , const unsigned int*, const int , const int);
+			void set_mat(const unsigned int id, const float* ,const unsigned int*, const int , const int);
 			void set_view(const glm::vec3 cam_pos, const glm::vec3 look_at_dir);
 			void reset_view(void);
 			void set_proj(const float fov, const float asp_ratio);
@@ -111,8 +106,6 @@ namespace samsRobot{
 			GLfloat* get_mat(const unsigned int id, int &size) const;
 			unsigned int* get_ind(const unsigned int id, int &size) const;
 
-			inline float get_keys_speed(void) const {return this->keys_speed;}
-			inline float get_mouse_wh_speed(void) const { return this->mouse_wh_speed;}
 			inline bool get_wireframe(void) const {return modeWireframe;}
 			void set_wireframe(const bool mode);
 			void toggle_wireframe(void);
@@ -123,14 +116,15 @@ namespace samsRobot{
 
 			void computeMatricesFromInputs(void);
 			void create_cuboid(const robotSeg segment);
-			void set_segProps(const unsigned int id, const glm::vec3 col, const glm::vec3 centre, const glm::vec3 orient);
+			void set_segProps(const unsigned int id, const glm::vec3 col, const glm::vec3 centre, const glm::vec3 pivot, const glm::vec3 orient);
 			void unset_segProps(const unsigned int id);
-			unsigned int getNumValidSegs(void);
+			inline unsigned int getNumValidSegs(void){ return numValidSegs;}
 
 			// callbacks
 			static void glfw_resize_callback(GLFWwindow* window, int width, int height);
 			static void glfw_error_callback(int error, const char* desc);
-			void process_inputs();
+			// static void glfw_key_callback(GLFWwindow* window, int key, int scanmode, int action, int modifier);
+			void process_inputs(void); 
 	};
 
 }

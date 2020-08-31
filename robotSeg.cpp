@@ -4,12 +4,19 @@
 namespace samsRobot{
 
 	robotSeg::robotSeg(){
+		// init as unit cube
 		size_x = 1.0f;
 		size_y = 1.0f;
 		size_z = 1.0f;
+		// place centre in middle
 		centre_x = size_x/2.0f;
 		centre_y = size_y/2.0f;
 		centre_z = size_z/2.0f;
+		// place pivot  (ie rotation point for child object at middle of end face
+		pivot_x = size_x;
+		pivot_y = size_y/2;
+		pivot_z = size_z/2;
+		// set colors (renderer will set alpha channel)
 		col_r = 0.1f;
 		col_g = 0.1f;
 		col_b = 0.1f;
@@ -34,6 +41,12 @@ namespace samsRobot{
 	}
 	void robotSeg::set_centre(const float x, const float y, const float z){
 		centre_x = x; centre_y = y; centre_z = z;
+	}
+	void robotSeg::get_pivot(float &x, float &y, float &z) const{
+		x = pivot_x; y = pivot_y; z = pivot_y;
+	}
+	void robotSeg::set_pivot(const float x, const float y, const float z){
+		pivot_x = x; pivot_y = y; pivot_z = z;
 	}
 	void robotSeg::get_colors(float &r, float &g, float &b) const{
 		r = col_r; g = col_g; b = col_b;
