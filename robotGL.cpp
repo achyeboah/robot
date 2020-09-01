@@ -361,8 +361,8 @@ namespace samsRobot{
 	}
 
 	void robotGL::reset_view(void){
-		cameraPos   = glm::vec3(5.0f, 5.0f, -5.0f);
-		cameraFront = glm::normalize(-cameraPos);
+		cameraPos   = glm::vec3(0.0f, 0.0f, 5.0f);
+		cameraFront = glm::normalize(glm::vec3(0.0f,0.0f,-1.0f));
 		cameraUp    = glm::vec3(0.0f, 1.0f, 0.0f);
 		// glfw_resize_callback(this->window, SCR_WIDTH, SCR_HEIGHT);
 	}
@@ -380,8 +380,8 @@ namespace samsRobot{
 		// h(0,0,0). g(0,w,0), e(0,0,h), f(0,w,h);
 		// all vertices then translated back halfway to centralise them
 		struct myvec3 {float x; float y; float z;};
-		myvec3 a{.x=x/2,.y=-y/2,.z=-y/2}, b{.x=x/2,.y=y/2,.z=-y/2}, c{.x=x/2,.y=-y/2,.z=z/2}, d{.x=x/2,.y=y/2,.z=z/2};
-		myvec3 h{.x=-x/2,.y=-y/2,.z=-y/2}, g{.x=-x/2,.y=y/2,.z=-z/2}, e{.x=-x/2,.y=-y/2,.z=z/2}, f{.x=-x/2,.y=y/2,.z=z/2};
+		myvec3 a{.x=x/2,.y=-y/2,.z=-z/2}, b{.x=x/2,.y=y/2,.z=-z/2}, c{.x=x/2,.y=-y/2,.z=z/2}, d{.x=x/2,.y=y/2,.z=z/2};
+		myvec3 h{.x=-x/2,.y=-y/2,.z=-z/2}, g{.x=-x/2,.y=y/2,.z=-z/2}, e{.x=-x/2,.y=-y/2,.z=z/2}, f{.x=-x/2,.y=y/2,.z=z/2};
 
 		// use an initializer list to fill values quickly, and presume memory allocated successfully;
 		const float* vertices = new float[8*8]{
@@ -398,6 +398,7 @@ namespace samsRobot{
 			 *	a----b 
 			 *     /
 			 *    x
+			 *
 			 */
 
 			// position		//color		// texture
@@ -413,12 +414,12 @@ namespace samsRobot{
 			h.x, h.y, h.z,		cr, cg, cb,	1.0f, 0.0f
 		};
 		const unsigned int* indices = new unsigned int[36]{
-			0, 1, 2, 1, 2, 3, // near face
-			2, 3, 4, 3, 4, 5, // top face
-			4, 5, 7, 5, 6, 7, // far face
-			6, 7, 1, 7, 1, 0, // bottom face
-			1, 3, 5, 1, 5, 6, // near side face
-			0, 2, 7, 2, 7, 5 // far side face
+			0, 1, 2, 1, 3, 2, // near face
+			2, 3, 4, 3, 5, 4, // top face
+			6, 7, 5, 7, 4, 5, // far face
+			0, 1, 7, 1, 6, 7, // bottom face
+			1, 6, 3, 6, 5, 3, // near side face
+			7, 0, 4, 0, 2, 4 // far side face
 		};
 
 		if((vertices == NULL) || (indices ==NULL)){

@@ -47,6 +47,7 @@ namespace samsRobot{
 		"void main()\n"
 		"{\n"
 		"	color = texture(theTexture, outTex) * vec4(outCol, 1.0f);\n"
+		"	color = vec4(outCol, 1.0f);\n"
 		"}\n\0";
 
 	struct segProps{
