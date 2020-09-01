@@ -374,7 +374,23 @@ namespace samsRobot{
 		segment.get_dimensions(x, y, z);
 		segment.get_colors(cr, cg, cb);
 		segment.get_pivot(px, py, pz);
-		
+
+		/*
+		 * 	   z
+		 * 	   | 
+		 *         e----f
+		 *	  /    /|
+		 *	 /    / |
+		 *	c----d  g --> y
+		 *	|    | /
+		 *	|    |/
+		 *	a----b 
+		 *     /
+		 *    x
+		 *
+		 */
+
+
 		// lets define our cuboid faces use end quads bounded by vertices abcdefg
 		// a(l,0,0), b(l,w,0), c(l,0,h), d(l,w,h)
 		// h(0,0,0). g(0,w,0), e(0,0,h), f(0,w,h);
@@ -385,41 +401,25 @@ namespace samsRobot{
 
 		// use an initializer list to fill values quickly, and presume memory allocated successfully;
 		const float* vertices = new float[8*8]{
-
-			/*
-			 * 	   z
-			 * 	   | 
-			 *         e----f
-			 *	  /    /|
-			 *	 /    / |
-			 *	c----d  g --> y
-			 *	|    | /
-			 *	|    |/
-			 *	a----b 
-			 *     /
-			 *    x
-			 *
-			 */
-
 			// position		//color		// texture
 			// vertices in near face
 			a.x, a.y, a.z, 		cr, cg, cb, 	0.0f, 0.0f,
-			b.x, b.y, b.z, 		cr, cg, cb,	1.0f, 0.0f,
-			c.x, c.y, c.z, 		cr, cg, cb,	0.0f, 1.0f,
-			d.x, d.y, d.z, 		cr, cg, cb,	1.0f, 1.0f, 
-			// vertices in far face
-			e.x, e.y, e.z,		cr, cg, cb,	1.0f, 1.0f,
-		       	f.x, f.y, f.z,		cr, cg, cb,	0.0f, 1.0f,
-		       	g.x, g.y, g.z, 		cr, cg, cb,	0.0f, 0.0f,
-			h.x, h.y, h.z,		cr, cg, cb,	1.0f, 0.0f
+				b.x, b.y, b.z, 		cr, cg, cb,	1.0f, 0.0f,
+				c.x, c.y, c.z, 		cr, cg, cb,	0.0f, 1.0f,
+				d.x, d.y, d.z, 		cr, cg, cb,	1.0f, 1.0f, 
+				// vertices in far face
+				e.x, e.y, e.z,		cr, cg, cb,	1.0f, 1.0f,
+				f.x, f.y, f.z,		cr, cg, cb,	0.0f, 1.0f,
+				g.x, g.y, g.z, 		cr, cg, cb,	0.0f, 0.0f,
+				h.x, h.y, h.z,		cr, cg, cb,	1.0f, 0.0f
 		};
 		const unsigned int* indices = new unsigned int[36]{
 			0, 1, 2, 1, 3, 2, // near face
-			2, 3, 4, 3, 5, 4, // top face
-			6, 7, 5, 7, 4, 5, // far face
-			0, 1, 7, 1, 6, 7, // bottom face
-			1, 6, 3, 6, 5, 3, // near side face
-			7, 0, 4, 0, 2, 4 // far side face
+				2, 3, 4, 3, 5, 4, // top face
+				6, 7, 5, 7, 4, 5, // far face
+				0, 1, 7, 1, 6, 7, // bottom face
+				1, 6, 3, 6, 5, 3, // near side face
+				7, 0, 4, 0, 2, 4 // far side face
 		};
 
 		if((vertices == NULL) || (indices ==NULL)){
@@ -429,7 +429,7 @@ namespace samsRobot{
 
 		set_mat(segment.getID(), vertices, indices, 8, 36);
 		set_segProps(segment.getID(), glm::vec3(cr, cg, cb), glm::vec3(px, py, pz), glm::vec3(cr, cg, cb), segment.getParentID());
-		
+
 		// clean up
 		delete vertices;
 		delete indices;

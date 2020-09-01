@@ -35,7 +35,7 @@ int motor_status = 0;
 
 // create just one segment to start with
 // global because accessed by multiple threads
-robotSeg x_axis, y_axis, z_axis, seg1, seg2;
+robotSeg x_axis, y_axis, z_axis, seg1, seg2, seg3;
 
 int main(int argc, char **argv)
 {
@@ -53,15 +53,15 @@ int main(int argc, char **argv)
 
 	// create axes here
 	x_axis.setID(1);
-	x_axis.set_dimensions(100,0.1,0.1);
+	x_axis.set_dimensions(100,0.05,0.05);
 	x_axis.set_pivot(0,0,0);
 	x_axis.set_colors(1,0.0,0.0);
 	y_axis.setID(2);
-	y_axis.set_dimensions(0.1,100,0.1);
+	y_axis.set_dimensions(0.05,100,0.05);
 	y_axis.set_pivot(0,0,0);
 	y_axis.set_colors(0,1,0);
 	z_axis.setID(3);
-	z_axis.set_dimensions(0.1,0.1,100);
+	z_axis.set_dimensions(0.05,0.05,100);
 	z_axis.set_pivot(0,0,0);
 	z_axis.set_colors(0,0,1);
 
@@ -69,12 +69,17 @@ int main(int argc, char **argv)
 	seg1.setID(5);
 	seg1.set_dimensions(3,1,1);
 	seg1.set_pivot(2.9,0.5,0.5);
-	seg1.set_colors(0.1,0.2,0.3);
+	seg1.set_colors(0.5,0.1,0.1);
 	seg2.setID(6);
 	seg2.set_dimensions(2,1,1);
 	seg2.set_pivot(1.9,0.5,0.5);
-	seg2.set_colors(0.5,0.1,0.2);
+	seg2.set_colors(0.1,0.5,0.1);
 	seg2.setParent(&seg1);
+	seg3.setID(7);
+	seg3.set_dimensions(2,1,1);
+	seg3.set_pivot(1.9,0.5,0.5);
+	seg3.set_colors(0.1,0.1,0.5);
+	seg3.setParent(&seg2);
 
 	if (argc < 2){
 		print_usage(argc, argv);
@@ -234,6 +239,7 @@ void* draw_graphics(void*){
 
 	glWin.create_cuboid(seg1);	
 	glWin.create_cuboid(seg2);	
+	glWin.create_cuboid(seg3);	
 	glWin.create_cuboid(x_axis);
 	glWin.create_cuboid(y_axis);
 	glWin.create_cuboid(z_axis);
