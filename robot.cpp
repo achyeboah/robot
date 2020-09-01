@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <time.h> // for rand()
 
 using namespace samsRobot;
 
@@ -35,7 +36,7 @@ int motor_status = 0;
 
 // create just one segment to start with
 // global because accessed by multiple threads
-robotSeg x_axis, y_axis, z_axis, seg1, seg2, seg3;
+robotSeg x_axis, y_axis, z_axis, seg1, seg2, seg3, seg4;
 
 int main(int argc, char **argv)
 {
@@ -68,15 +69,19 @@ int main(int argc, char **argv)
 	// create robot here
 	seg1.setID(5);
 	seg1.set_dimensions(5,1,1);
-	seg1.set_colors(0.5,0.1,0.1);
+	seg1.set_colors(0.3,0.1,0.1);
 	seg2.setID(6);
-	seg2.set_dimensions(4,1,1);
-	seg2.set_colors(0.1,0.5,0.1);
+	seg2.set_dimensions(5,1,1);
+	seg2.set_colors(0.3,0.5,0.1);
 	seg2.setParent(&seg1);
 	seg3.setID(7);
-	seg3.set_dimensions(3,1,1);
-	seg3.set_colors(0.1,0.1,0.5);
+	seg3.set_dimensions(5,1,1);
+	seg3.set_colors(0.3,0.1,0.5);
 	seg3.setParent(&seg2);
+	seg4.setID(8);
+	seg4.set_dimensions(5,1,1);
+	seg4.set_colors(0.3,0.1,0.5);
+	seg4.setParent(&seg3);
 
 	if (argc < 2){
 		print_usage(argc, argv);
@@ -237,14 +242,33 @@ void* draw_graphics(void*){
 	glWin.create_cuboid(seg1);	
 	glWin.create_cuboid(seg2);	
 	glWin.create_cuboid(seg3);	
+	glWin.create_cuboid(seg4);	
 	glWin.create_cuboid(x_axis);
 	glWin.create_cuboid(y_axis);
 	glWin.create_cuboid(z_axis);
 
+	float seg1_pitch=0.0f;
+	float seg2_pitch=0.0f;
+	float seg3_pitch=0.0f;
+	float seg4_pitch=0.0f;
+
+	float elapsedTime = 0.0f;
+
 	do{
+		elapsedTime += 0.05;
+
+		seg1_pitch = sin(elapsedTime);
+		seg2_pitch = cos(elapsedTime);
+		seg3_pitch = sin(elapsedTime); 
+		seg4_pitch = cos(elapsedTime);
+		glWin.set_segAngles(seg1.getID(), seg1_pitch, 0, 0);
+		glWin.set_segAngles(seg2.getID(), 0, seg2_pitch, 0);
+		glWin.set_segAngles(seg3.getID(), 0, 0, seg3_pitch);
+		glWin.set_segAngles(seg4.getID(), seg4_pitch, 0, seg4_pitch);
+
 	 	glWin.updateScreen();
 		robotGL_fps = glWin.get_fps();
-		usleep(20000); // achieving 80fps with 10ms sleep, 20fps with 50ms sleep
+		usleep(50000); // achieving 80fps with 10ms sleep, 20fps with 50ms sleep
 	}while(glWin.get_progFinished() == FALSE);
 
 	// send a message to other threads that its time to quit!

@@ -62,7 +62,11 @@ namespace samsRobot{
 		GLfloat* vertex_data; // vertex data (position, color and texture)
 		unsigned int* index_data; // actual float data
 		int numVertices, numIndices; // number of vertices and indices (not always equal!)
+
+		float pitch, yaw, roll; // prob should be elsewhere
 	};
+
+	static float fov; // camera field of view
 
 	class robotGL{
 		private:
@@ -74,14 +78,15 @@ namespace samsRobot{
 			unsigned int texture; // handle for texture data
 
 			glm::vec3 cameraPos, cameraFront, cameraUp;
+			// use these to compute user interaction (accessed by a static callback)
+			float view_rotx, view_roty, view_rotz;
+			bool firstMouse = true;
+			float yaw, pitch, lastX, lastY;
 
 			bool prog_finished;
 			bool modeWireframe;
 			float prevtime;
 			float fps; // track how fast we're updating screen
-
-			// use these to compute user interaction (accessed by a static callback)
-			float view_rotx, view_roty, view_rotz;
 
 			// each seg contains a unique robot segment
 			segProps seg[MAX_NUM_SEGMENTS]; // allocate space for some segments
@@ -110,13 +115,18 @@ namespace samsRobot{
 			GLfloat* get_mat(const unsigned int id, int &size) const;
 			unsigned int* get_ind(const unsigned int id, int &size) const;
 			void unset_segProps(const unsigned int id);
+			void set_segAngles(const unsigned int id, const float pitch, const float yaw, const float roll);
+			void get_segAngles(const unsigned int id, float& pitch, float& yaw, float &roll) const;
 
 			// callbacks
 			static void glfw_resize_callback(GLFWwindow* window, int width, int height);
 			static void glfw_error_callback(int error, const char* desc);
+			void mouse_callback(GLFWwindow* window);
+			static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+
 			void stop(void);
 			// static void glfw_key_callback(GLFWwindow* window, int key, int scanmode, int action, int modifier);
-			
+
 			void process_inputs(void); 
 	};
 

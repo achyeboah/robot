@@ -82,13 +82,16 @@ namespace samsRobot{
 			glfwTerminate();
 			return -1;
 		}
-		// disable mouse for fullscreen
-		if(monitor) glfwSetInputMode(this->window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 		// use the context
 		glfwMakeContextCurrent(this->window);
 		glfwSetFramebufferSizeCallback(this->window, this->glfw_resize_callback);
-//		glfwSetKeyCallback(this->window, this->glfw_key_callback);
+		// glfwSetKeyCallback(this->window, this->glfw_key_callback);
+		// glfwSetCursorPosCallback(window, mouse_callback);
+		glfwSetScrollCallback(window, scroll_callback);
+		//
+		// tell GLFW to capture our mouse
+		// glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 		// not convinced this is necessary?
 		glfwGetFramebufferSize(this->window, &width, &height);
@@ -179,9 +182,10 @@ namespace samsRobot{
 		// load image, create texture and generate mipmaps
 		int nrChannels;
 		// stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
-		unsigned char *data = stbi_load("resources/1.png", &width, &height, &nrChannels, 0);
+		// unsigned char *data = stbi_load("resources/1.png", &width, &height, &nrChannels, 0);
+		unsigned char *data = stbi_load("resources/white.jpeg", &width, &height, &nrChannels, 0);
 		if (data){
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
 			glGenerateMipmap(GL_TEXTURE_2D);
 		}else
 			fprintf(stderr, "robotGL::init(): Failed to load texture!\n");
@@ -252,11 +256,11 @@ namespace samsRobot{
 
 		// create MVP transformations
 		glm::mat4 iprojection    = glm::mat4(1.0f);
-		iprojection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+		iprojection = glm::perspective(glm::radians(fov), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 		int loc = glGetUniformLocation(this->programID, "projection");
 		glUniformMatrix4fv(loc, 1, GL_FALSE, &(iprojection[0][0]));
 
-	        glm::mat4 view = glm::lookAt(this->cameraPos, this->cameraPos + this->cameraFront, this->cameraUp);
+	        glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 		loc = glGetUniformLocation(this->programID, "view");
 		glUniformMatrix4fv(loc, 1, GL_FALSE, &(view[0][0]));
 
@@ -272,11 +276,17 @@ namespace samsRobot{
 				glm::mat4 model = glm::mat4(1.0f);
 
 				// just for jokes
-				float rot_x_ax = sin(glfwGetTime());
-				float rot_y_ax = cos(glfwGetTime());
-				// model = glm::rotate(model, glm::radians(rot_x_ax), glm::vec3(1.0f, 0.0f, 0.0f)); // based on IMU info
-				// model = glm::rotate(model, glm::radians(rot_y_ax), glm::vec3(0.0f, 1.0f, 0.0f)); // based on IMU info
-				// model = glm::rotate(model, glm::radians(rot_z_ax), glm::vec3(0.0f, 0.0f, 1.0f)); // based on IMU info
+				if(seg[i].axis == 0){
+					// float rot_x_ax = sin(glfwGetTime());
+					// float rot_y_ax = cos(glfwGetTime());
+					float rot_x_ax = seg[i].pitch;
+					float rot_y_ax = seg[i].roll;
+					float rot_z_ax = seg[i].yaw;
+					// rotations are in radians!
+					model = glm::rotate(model, (rot_x_ax), glm::vec3(1.0f, 0.0f, 0.0f)); // based on IMU info
+					model = glm::rotate(model, (rot_y_ax), glm::vec3(0.0f, 1.0f, 0.0f)); // based on IMU info
+					model = glm::rotate(model, (rot_z_ax), glm::vec3(0.0f, 0.0f, 1.0f)); // based on IMU info
+				}
 				
 				// capture the existing record of trans/rots in model
 				// model = seg[i].model * model;
@@ -339,6 +349,9 @@ namespace samsRobot{
 		// Swap buffers
 		glfwSwapBuffers(window);
 		glfwPollEvents();
+
+		// fprintf(stderr, "pos (%02.2f, %02.2f, %02.2f), front (%02.2f, %02.2f, %02.2f), up (%02.2f, %02.2f, %02.2f)\n", 
+		// 		cameraPos.x, cameraPos.y, cameraPos.z, cameraFront.x, cameraFront.y, cameraFront.z, cameraUp.x, cameraUp.y, cameraUp.z);
 	}
 
 	robotGL::~robotGL(){
@@ -382,11 +395,19 @@ namespace samsRobot{
 	}
 
 	void robotGL::reset_view(void){
-		cameraPos   = glm::vec3(10.0f, -10.0f, 10.0f);
-		cameraFront = glm::normalize(glm::vec3(0.0f,-1.0f,0.0f));
-		cameraFront = glm::normalize(-cameraPos);
-		cameraUp    = glm::vec3(0.0f, 0.0f, 1.0f);
-		// glfw_resize_callback(this->window, SCR_WIDTH, SCR_HEIGHT);
+		// positive X axis is (thumb) towards right of screen
+		// positive Y axis is (fore finger) towards top of screen
+		// positive Z axis is (mid finger) out of screen towards me
+		cameraPos   = glm::vec3(0.0f, 0.0f, 10.0f);
+		cameraFront = glm::normalize(glm::vec3(0.0f,0.0f, -1.0f));
+		// cameraFront = glm::normalize(-cameraPos);
+		cameraUp    = glm::vec3(0.0f, 1.0f, 0.0f);
+		firstMouse = true;
+		fov = 45.0f;
+		yaw  = -90.0f;	// yaw is initialized to -90.0 degrees since a yaw of 0.0 results in a direction vector pointing to the right so we initially rotate a bit to the left.
+		pitch =  0.0f;
+		lastX =  SCR_WIDTH / 2.0f;
+		lastY =  SCR_HEIGHT / 2.0f;
 	}
 
 	void robotGL::create_cuboid(const robotSeg segment){
@@ -411,7 +432,6 @@ namespace samsRobot{
 		 *
 		 */
 
-
 		// lets define our cuboid faces use end quads bounded by vertices abcdefg
 		// a(l,0,0), b(l,w,0), c(l,0,h), d(l,w,h)
 		// h(0,0,0). g(0,w,0), e(0,0,h), f(0,w,h);
@@ -430,18 +450,28 @@ namespace samsRobot{
 		const float* vertices = new float[8*8]{
 			// position		//color		// texture
 			// vertices in near face
-			a.x, a.y, a.z, 		cr, cg, cb, 	0.0f, 0.0f,
+			a.x, a.y, a.z, 		cr, cg, cb, 	1.0f, 0.0f,
 			b.x, b.y, b.z, 		cr, cg, cb,	1.0f, 0.0f,
-			c.x, c.y, c.z, 		cr, cg, cb,	0.0f, 1.0f,
+			c.x, c.y, c.z, 		cr, cg, cb,	1.0f, 1.0f,
 			d.x, d.y, d.z, 		cr, cg, cb,	1.0f, 1.0f, 
 			// vertices in far face
-			e.x, e.y, e.z,		cr, cg, cb,	1.0f, 1.0f,
+			e.x, e.y, e.z,		cr, cg, cb,	0.0f, 1.0f,
 			f.x, f.y, f.z,		cr, cg, cb,	0.0f, 1.0f,
 			g.x, g.y, g.z, 		cr, cg, cb,	0.0f, 0.0f,
-			h.x, h.y, h.z,		cr, cg, cb,	1.0f, 0.0f
+			h.x, h.y, h.z,		cr, cg, cb,	0.0f, 0.0f
 		};
+		/*
 		const unsigned int* indices = new unsigned int[36]{
 			0, 1, 2, 1, 3, 2, // near face
+			2, 3, 4, 3, 5, 4, // top face
+			6, 7, 5, 7, 4, 5, // far face
+			0, 1, 7, 1, 6, 7, // bottom face
+			1, 6, 3, 6, 5, 3, // near side face
+			7, 0, 4, 0, 2, 4 // far side face
+		};
+		*/
+		const unsigned int* indices = new unsigned int[36]{
+			7, 0, 2, 7, 2, 4, // near face
 			2, 3, 4, 3, 5, 4, // top face
 			6, 7, 5, 7, 4, 5, // far face
 			0, 1, 7, 1, 6, 7, // bottom face
@@ -512,6 +542,21 @@ namespace samsRobot{
 		seg[id].model = glm::mat4(1.0f);
 	}
 
+	void robotGL::set_segAngles(const unsigned int id, const float pitch, const float yaw, const float roll){
+		// presume segment is initialized
+		seg[id].pitch = pitch;
+		seg[id].yaw = yaw;
+		seg[id].roll = roll;
+	}
+
+	void robotGL::get_segAngles(const unsigned int id, float& pitch, float& yaw, float &roll) const {
+		pitch = seg[id].pitch;
+		yaw = seg[id].yaw;
+		roll = seg[id].roll;
+	}
+
+
+
 	void robotGL::unset_segProps(const unsigned int id){
 
 		if((id < 0) || (id >= MAX_NUM_SEGMENTS)) return;
@@ -530,10 +575,14 @@ namespace samsRobot{
 		set_segProps(id, temp, temp, temp, 0, 0);
 		seg[id].model = glm::mat4(1.0f);
 		seg[id].beginpoint = glm::vec3(0);
+		seg[id].pitch = 0.0f;
+		seg[id].yaw = 0.0f;
+		seg[id].roll = 0.0f;
 	}
 
-	// void robotGL::glfw_key_callback(GLFWwindow* window, int key, int scanmode, int action, int modifier){
 	void robotGL::process_inputs(void){
+
+		mouse_callback(this->window);
 
 		// track time
 		float currtime = glfwGetTime();
@@ -543,7 +592,7 @@ namespace samsRobot{
 			deltatime = 0.001;
 		fps = 1.0f/deltatime;
 
-		float cameraSpeed = 2.0f * deltatime;
+		float cameraSpeed = 5.0f * deltatime;
 
 		if (glfwGetKey(this->window, GLFW_KEY_Z) == GLFW_PRESS)
 			toggle_wireframe();
@@ -555,16 +604,63 @@ namespace samsRobot{
 
 		// keys below move the camera position, mouse affects lookat and zoom
 		if (glfwGetKey(this->window, GLFW_KEY_UP) == GLFW_PRESS)
-			this->cameraPos -= (this->cameraUp)*cameraSpeed;
+			cameraPos -= (cameraUp)*cameraSpeed;
 		if (glfwGetKey(this->window, GLFW_KEY_DOWN) == GLFW_PRESS)
-			this->cameraPos += (this->cameraUp)*cameraSpeed;
+			cameraPos += (cameraUp)*cameraSpeed;
 		if (glfwGetKey(this->window, GLFW_KEY_LEFT) == GLFW_PRESS)
-			this->cameraPos += glm::normalize(glm::cross(this->cameraFront, this->cameraUp)) * cameraSpeed;
+			cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
 		if (glfwGetKey(this->window, GLFW_KEY_RIGHT) == GLFW_PRESS)
-			this->cameraPos -= glm::normalize(glm::cross(this->cameraFront, this->cameraUp)) * cameraSpeed;
+			cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
 		if (glfwGetKey(this->window, GLFW_KEY_PAGE_UP) == GLFW_PRESS)
-			this->cameraPos += cameraSpeed * cameraFront;
+			cameraPos += cameraSpeed * cameraFront;
 		if (glfwGetKey(this->window, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS)
-			this->cameraPos -= cameraSpeed * cameraFront;
+			cameraPos -= cameraSpeed * cameraFront;
+	}
+
+	void robotGL::mouse_callback(GLFWwindow* window){
+
+		double xpos = 0.0f;
+		double ypos = 0.0f;
+		glfwGetCursorPos(window, &xpos, &ypos);
+
+		if (firstMouse){
+			lastX = xpos;
+			lastY = ypos;
+			firstMouse = false;
+		}
+
+		float xoffset = xpos - lastX;
+		float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+		lastX = xpos;
+		lastY = ypos;
+
+		float sensitivity = 0.1f; // change this value to your liking
+		xoffset *= sensitivity;
+		yoffset *= sensitivity;
+
+		yaw += xoffset;
+		pitch += yoffset;
+
+		// make sure that when pitch is out of bounds, screen doesn't get flipped
+		if (pitch > 89.0f)
+			pitch = 89.0f;
+		if (pitch < -89.0f)
+			pitch = -89.0f;
+
+		glm::vec3 front;
+		front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+		front.y = sin(glm::radians(pitch));
+		front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+		cameraFront = glm::normalize(front);
+	}
+
+	// glfw: whenever the mouse scroll wheel scrolls, this callback is called
+	// ----------------------------------------------------------------------
+	void robotGL::scroll_callback(GLFWwindow* window, double xoffset, double yoffset){
+		fov -= 3*(float)yoffset;
+		if (fov < 1.0f)
+			fov = 1.0f;
+		if (fov > 45.0f)
+			fov = 45.0f;
 	}
 }// namespace
