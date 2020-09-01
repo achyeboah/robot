@@ -17,7 +17,6 @@ namespace samsRobot{
 		private:
 			// graphics attributes, potentially useful also for physics
 			float size_x, size_y, size_z; // in mm
-			float centre_x, centre_y, centre_z; // displacement from 0,0,0
 			float pivot_x, pivot_y, pivot_z; // pivot for child objects
 			float col_r, col_g, col_b; // rgba
 			robotSeg* parent;
@@ -26,14 +25,12 @@ namespace samsRobot{
 			unsigned int id;
 
 		public:
-			robotSeg(); // presumes dimensions are 1,1,1, color red, centred around origin
+			robotSeg(); // presumes dimensions are 1,1,1, color red, 
 			~robotSeg();
 
 			// link management items
 			void get_dimensions(float &l, float &w, float &h) const;
 			void set_dimensions(const float l, const float w, const float h);
-			void get_centre(float &x, float &y, float &z) const;
-			void set_centre(const float x, const float y, const float z);
 			void get_pivot(float &x, float &y, float &z) const;
 			void set_pivot(const float x, const float y, const float z);
 			void get_colors(float &r, float &g, float &b) const;

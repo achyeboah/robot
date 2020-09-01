@@ -8,10 +8,6 @@ namespace samsRobot{
 		size_x = 1.0f;
 		size_y = 1.0f;
 		size_z = 1.0f;
-		// place centre in middle
-		centre_x = size_x/2.0f;
-		centre_y = size_y/2.0f;
-		centre_z = size_z/2.0f;
 		// place pivot  (ie rotation point for child object at middle of end face
 		pivot_x = size_x;
 		pivot_y = size_y/2;
@@ -35,12 +31,6 @@ namespace samsRobot{
 	}
 	void robotSeg::set_dimensions(const float l, const float w, const float h){
 		size_x = l; size_y = w; size_z = h;
-	}
-	void robotSeg::get_centre(float &x, float &y, float &z) const{
-		x = centre_x; y = centre_y; z = centre_y;
-	}
-	void robotSeg::set_centre(const float x, const float y, const float z){
-		centre_x = x; centre_y = y; centre_z = z;
 	}
 	void robotSeg::get_pivot(float &x, float &y, float &z) const{
 		x = pivot_x; y = pivot_y; z = pivot_y;

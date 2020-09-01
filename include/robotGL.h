@@ -9,7 +9,7 @@
 #define SCR_WIDTH 640
 #define SCR_HEIGHT 480
 
-#define MAX_NUM_SEGMENTS 5
+#define MAX_NUM_SEGMENTS 10
 
 // Include GLFW
 #include <GL/glew.h>
@@ -55,7 +55,6 @@ namespace samsRobot{
 		bool inUse; // is this segment in use?
 		glm::vec3 colour; // contains the colours from the segment
 		glm::vec3 pivot; // contains the pivot (for translation of any child)
-		glm::vec3 centre; // contains the centre (for translation) of the segment
 		glm::vec3 orient; // contains the orientation data (for rotations) of the segment
 		GLfloat* vertex_data; // vertex data (position, color and texture)
 		unsigned int* index_data; // actual float data
@@ -105,7 +104,7 @@ namespace samsRobot{
 
 			void create_cuboid(const robotSeg segment);
 			void set_mat(const unsigned int id, const float* ,const unsigned int*, const int , const int);
-			void set_segProps(const unsigned int id, const glm::vec3 col, const glm::vec3 centre, const glm::vec3 pivot, const glm::vec3 orient, const unsigned int parentid = 0);
+			void set_segProps(const unsigned int id, const glm::vec3 col, const glm::vec3 pivot, const glm::vec3 orient, const unsigned int parentid = 0);
 			GLfloat* get_mat(const unsigned int id, int &size) const;
 			unsigned int* get_ind(const unsigned int id, int &size) const;
 			void unset_segProps(const unsigned int id);

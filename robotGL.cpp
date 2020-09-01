@@ -268,8 +268,6 @@ namespace samsRobot{
 					glm::vec3 temp = seg[seg[i].parentid].pivot;
 					model = glm::translate(model, temp); 
 				}
-				else
-					model = glm::translate(model, -seg[i].centre);
 
 				loc = glGetUniformLocation(this->programID, "model");
 				glUniformMatrix4fv(loc, 1, GL_FALSE, &(model[0][0]));
@@ -363,8 +361,8 @@ namespace samsRobot{
 	}
 
 	void robotGL::reset_view(void){
-		cameraPos   = glm::vec3(0.0f, 0.0f, 10.0f);
-		cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+		cameraPos   = glm::vec3(5.0f, 5.0f, -5.0f);
+		cameraFront = glm::normalize(-cameraPos);
 		cameraUp    = glm::vec3(0.0f, 1.0f, 0.0f);
 		// glfw_resize_callback(this->window, SCR_WIDTH, SCR_HEIGHT);
 	}
@@ -372,21 +370,36 @@ namespace samsRobot{
 	void robotGL::create_cuboid(const robotSeg segment){
 		// create a cuboid for the segment passed - using indexing
 		// each cuboid has 6 faces, 2 triangles per face, 3 vertices per triangle (no indexing), 3 floats per vertex
-		float x,y,z,cr,cg,cb,cx,cy,cz, px, py, pz;
+		float x,y,z, cr,cg,cb, px,py,pz;
 		segment.get_dimensions(x, y, z);
 		segment.get_colors(cr, cg, cb);
-		segment.get_centre(cx, cy, cz);
 		segment.get_pivot(px, py, pz);
 		
 		// lets define our cuboid faces use end quads bounded by vertices abcdefg
 		// a(l,0,0), b(l,w,0), c(l,0,h), d(l,w,h)
 		// h(0,0,0). g(0,w,0), e(0,0,h), f(0,w,h);
+		// all vertices then translated back halfway to centralise them
 		struct myvec3 {float x; float y; float z;};
-		myvec3 a{.x=x,.y=0,.z=0}, b{.x=x,.y=y,.z=0}, c{.x=x,.y=0,.z=z}, d{.x=x,.y=y,.z=z};
-		myvec3 h{.x=0,.y=0,.z=0}, g{.x=0,.y=y,.z=0}, e{.x=0,.y=0,.z=z}, f{.x=0,.y=y,.z=z};
+		myvec3 a{.x=x/2,.y=-y/2,.z=-y/2}, b{.x=x/2,.y=y/2,.z=-y/2}, c{.x=x/2,.y=-y/2,.z=z/2}, d{.x=x/2,.y=y/2,.z=z/2};
+		myvec3 h{.x=-x/2,.y=-y/2,.z=-y/2}, g{.x=-x/2,.y=y/2,.z=-z/2}, e{.x=-x/2,.y=-y/2,.z=z/2}, f{.x=-x/2,.y=y/2,.z=z/2};
 
 		// use an initializer list to fill values quickly, and presume memory allocated successfully;
 		const float* vertices = new float[8*8]{
+
+			/*
+			 * 	   z
+			 * 	   | 
+			 *         e----f
+			 *	  /    /|
+			 *	 /    / |
+			 *	c----d  g --> y
+			 *	|    | /
+			 *	|    |/
+			 *	a----b 
+			 *     /
+			 *    x
+			 */
+
 			// position		//color		// texture
 			// vertices in near face
 			a.x, a.y, a.z, 		cr, cg, cb, 	0.0f, 0.0f,
@@ -394,10 +407,10 @@ namespace samsRobot{
 			c.x, c.y, c.z, 		cr, cg, cb,	0.0f, 1.0f,
 			d.x, d.y, d.z, 		cr, cg, cb,	1.0f, 1.0f, 
 			// vertices in far face
-			e.x, e.y, e.z,		cr, cg, cb,	0.0f, 0.0f,
-		       	f.x, f.y, f.z,		cr, cg, cb,	1.0f, 0.0f,
-		       	g.x, g.y, g.z, 		cr, cg, cb,	0.0f, 1.0f,
-			h.x, h.y, h.z,		cr, cg, cb,	1.0f, 1.0f
+			e.x, e.y, e.z,		cr, cg, cb,	1.0f, 1.0f,
+		       	f.x, f.y, f.z,		cr, cg, cb,	0.0f, 1.0f,
+		       	g.x, g.y, g.z, 		cr, cg, cb,	0.0f, 0.0f,
+			h.x, h.y, h.z,		cr, cg, cb,	1.0f, 0.0f
 		};
 		const unsigned int* indices = new unsigned int[36]{
 			0, 1, 2, 1, 2, 3, // near face
@@ -414,7 +427,7 @@ namespace samsRobot{
 		}
 
 		set_mat(segment.getID(), vertices, indices, 8, 36);
-		set_segProps(segment.getID(), glm::vec3(cr, cg, cb), glm::vec3(cx, cy, cz), glm::vec3(px, py, pz), glm::vec3(cr, cg, cb), segment.getParentID());
+		set_segProps(segment.getID(), glm::vec3(cr, cg, cb), glm::vec3(px, py, pz), glm::vec3(cr, cg, cb), segment.getParentID());
 		
 		// clean up
 		delete vertices;
@@ -456,14 +469,13 @@ namespace samsRobot{
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
 
-	void robotGL::set_segProps(const unsigned int id, const glm::vec3 col, const glm::vec3 centre, const glm::vec3 pivot, const glm::vec3 orient, const unsigned int parentID){
+	void robotGL::set_segProps(const unsigned int id, const glm::vec3 col, const glm::vec3 pivot, const glm::vec3 orient, const unsigned int parentID){
 
 		if((id < 0) || (id >= MAX_NUM_SEGMENTS)) return;
 
 		seg[id].id = id; // should use a more clever unique id, really - this is redundant
 		seg[id].inUse = true;
 		seg[id].colour = col;
-		seg[id].centre = centre;
 		seg[id].pivot = pivot;
 		seg[id].orient = orient;
 		seg[id].parentid = parentID;
@@ -479,7 +491,7 @@ namespace samsRobot{
 		delete seg[id].index_data;
 
 		glm::vec3 temp(0.0f,0.0f,0.0f);
-		set_segProps(id, temp, temp, temp, temp);
+		set_segProps(id, temp, temp, temp);
 		// decrement number of valid segments too!
 		this->numValidSegs--;
 	}
@@ -495,7 +507,7 @@ namespace samsRobot{
 			deltatime = 0.001;
 		fps = 1.0f/deltatime;
 
-		float cameraSpeed = 1.0f * deltatime;
+		float cameraSpeed = 2.0f * deltatime;
 
 		if (glfwGetKey(this->window, GLFW_KEY_Z) == GLFW_PRESS)
 			toggle_wireframe();
@@ -511,9 +523,9 @@ namespace samsRobot{
 		if (glfwGetKey(this->window, GLFW_KEY_DOWN) == GLFW_PRESS)
 			this->cameraPos += (this->cameraUp)*cameraSpeed;
 		if (glfwGetKey(this->window, GLFW_KEY_LEFT) == GLFW_PRESS)
-			this->cameraPos -= glm::normalize(glm::cross(this->cameraFront, this->cameraUp)) * cameraSpeed;
-		if (glfwGetKey(this->window, GLFW_KEY_RIGHT) == GLFW_PRESS)
 			this->cameraPos += glm::normalize(glm::cross(this->cameraFront, this->cameraUp)) * cameraSpeed;
+		if (glfwGetKey(this->window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+			this->cameraPos -= glm::normalize(glm::cross(this->cameraFront, this->cameraUp)) * cameraSpeed;
 		if (glfwGetKey(this->window, GLFW_KEY_PAGE_UP) == GLFW_PRESS)
 			this->cameraPos += cameraSpeed * cameraFront;
 		if (glfwGetKey(this->window, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS)

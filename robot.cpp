@@ -35,13 +35,14 @@ int motor_status = 0;
 
 // create just one segment to start with
 // global because accessed by multiple threads
-robotSeg seg1, seg2;
+robotSeg x_axis, y_axis, z_axis, seg1, seg2;
 
 int main(int argc, char **argv)
 {
 	/* options for this program are as follows
 	 * c|C displays the ncurses screen
 	 * g|G displays the opengl screen
+	 * f|F displays the opengl screen in fullscreen
 	 * absence of either of these, or any other displays usage screen
 	 */
 
@@ -50,15 +51,27 @@ int main(int argc, char **argv)
 	bool do_gl = FALSE;
 	int opt; // track options
 
+	// create axes here
+	x_axis.setID(1);
+	x_axis.set_dimensions(100,0.1,0.1);
+	x_axis.set_pivot(0,0,0);
+	x_axis.set_colors(1,0.0,0.0);
+	y_axis.setID(2);
+	y_axis.set_dimensions(0.1,100,0.1);
+	y_axis.set_pivot(0,0,0);
+	y_axis.set_colors(0,1,0);
+	z_axis.setID(3);
+	z_axis.set_dimensions(0.1,0.1,100);
+	z_axis.set_pivot(0,0,0);
+	z_axis.set_colors(0,0,1);
+
 	// create robot here
-	seg1.setID(1);
+	seg1.setID(5);
 	seg1.set_dimensions(3,1,1);
-	seg1.set_centre(0.5,1,0.5);
 	seg1.set_pivot(2.9,0.5,0.5);
 	seg1.set_colors(0.1,0.2,0.3);
-	seg2.setID(2);
+	seg2.setID(6);
 	seg2.set_dimensions(2,1,1);
-	seg2.set_centre(1,0.5,0.5);
 	seg2.set_pivot(1.9,0.5,0.5);
 	seg2.set_colors(0.5,0.1,0.2);
 	seg2.setParent(&seg1);
@@ -218,8 +231,12 @@ void* draw_graphics(void*){
 	robotGL glWin(do_fullscreen);
 	// need to pass in some parameters
 	glWin.set_bg(0.0f, 0.0f, 0.1f, 0.2f);
+
 	glWin.create_cuboid(seg1);	
 	glWin.create_cuboid(seg2);	
+	glWin.create_cuboid(x_axis);
+	glWin.create_cuboid(y_axis);
+	glWin.create_cuboid(z_axis);
 
 	do{
 	 	glWin.updateScreen();
