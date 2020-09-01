@@ -24,6 +24,12 @@ namespace samsRobot{
 		fps = 0;
 
 		reset_view();
+		// init segments
+		for(int i = 0; i < MAX_NUM_SEGMENTS; i++){
+			seg[i].vertex_data = NULL;
+			seg[i].index_data = NULL;
+			unset_segProps(i);
+		}
 
 		if(this->init(do_fullscreen) != 0)
 			stop();
@@ -123,25 +129,35 @@ namespace samsRobot{
 		glShaderSource(this->vertex_shader, 1, &vertex_shader_text, NULL);
 		glCompileShader(this->vertex_shader);
 		glGetShaderiv(this->vertex_shader, GL_COMPILE_STATUS, &gl_success);
-		if(!gl_success){fprintf(stderr, "RobotGL:INIT(). Compile VertShader program failed\n");
+		if(!gl_success){
+			fprintf(stderr, "RobotGL:INIT(). Compile VertShader program failed\n");
 			char infoLog[512];
-		        glGetShaderInfoLog(vertex_shader, 512, NULL, infoLog);
-        		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;	
+			glGetShaderInfoLog(vertex_shader, 512, NULL, infoLog);
+			std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;	
 		}
 
 		this->fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
 		glShaderSource(this->fragment_shader, 1, &fragment_shader_text, NULL);
 		glCompileShader(this->fragment_shader);
 		glGetShaderiv(this->fragment_shader, GL_COMPILE_STATUS, &gl_success);
-		if(!gl_success){fprintf(stderr, "RobotGL:INIT(). Compile FragShader program failed\n");}
-
+		if(!gl_success){
+			fprintf(stderr, "RobotGL:INIT(). Compile FragShader program failed\n");
+			char infoLog[512];
+		        glGetShaderInfoLog(fragment_shader, 512, NULL, infoLog);
+        		std::cout << "ERROR::SHADER::FRAG::COMPILATION_FAILED\n" << infoLog << std::endl;	
+		}
 		this->programID = glCreateProgram();
 		glAttachShader(this->programID, this->vertex_shader);
 		glAttachShader(this->programID, this->fragment_shader);
 		glLinkProgram(this->programID);
 		// check for link errors
 		glGetProgramiv(this->programID, GL_LINK_STATUS, &gl_success);
-		if(!gl_success){fprintf(stderr, "RobotGL:INIT(). Link program failed\n");}
+		if(!gl_success){
+			fprintf(stderr, "RobotGL:INIT(). Link program failed\n");
+			char infoLog[512];
+		        glGetShaderInfoLog(programID, 512, NULL, infoLog);
+        		std::cout << "ERROR::LINK::FRAG::COMPILATION_FAILED\n" << infoLog << std::endl;	
+		}
 
 		glDeleteShader(this->vertex_shader);
 		glDeleteShader(this->fragment_shader);
@@ -193,10 +209,7 @@ namespace samsRobot{
 		// A cube has 6 faces with 2 triangles each, so this makes 6*2=12 triangles, and 12*3=36 vertices, 3*36=108 floats
 		// however we'll use indexing!
 
-		if (seg[id].vertex_data != NULL){
-			delete seg[id].vertex_data;
-			delete seg[id].index_data;
-		}
+		unset_segProps(id);
 		seg[id].vertex_data = new GLfloat[8*numVertices]; // 3 for position, 3 for colour, 2 for texture
 		seg[id].index_data = new unsigned int[numIndices];
 
@@ -247,7 +260,6 @@ namespace samsRobot{
 		loc = glGetUniformLocation(this->programID, "view");
 		glUniformMatrix4fv(loc, 1, GL_FALSE, &(view[0][0]));
 
-
 		// bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
 		glBindVertexArray(this->VAO);
 
@@ -258,19 +270,30 @@ namespace samsRobot{
 			if (this->seg[i].inUse == true){
 				// lets make sure we're putting the data in the right place - ie before we load it into VBO
 				glm::mat4 model = glm::mat4(1.0f);
+
 				// just for jokes
-				// if (i == 2) model = glm::rotate(model, glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f)); // add rotations later based on IMU info
+				float rot_x_ax = sin(glfwGetTime());
+				float rot_y_ax = cos(glfwGetTime());
+				// model = glm::rotate(model, glm::radians(rot_x_ax), glm::vec3(1.0f, 0.0f, 0.0f)); // based on IMU info
+				// model = glm::rotate(model, glm::radians(rot_y_ax), glm::vec3(0.0f, 1.0f, 0.0f)); // based on IMU info
+				// model = glm::rotate(model, glm::radians(rot_z_ax), glm::vec3(0.0f, 0.0f, 1.0f)); // based on IMU info
+				
+				// capture the existing record of trans/rots in model
+				// model = seg[i].model * model;
+				// seg[i].model = model;
 
 				// check if this has a parent (ie a non-zero parent id)
-				// and translate it such that it is centred (for rotation) around the pivot of the parent, else use the given centre
+				// and translate it such that it is centred (for rotation) around the endpoint of the parent, else use the given centre
 				// check its valid and check that parent has been loaded for use
 				if((seg[i].parentid != 0) && (seg[seg[i].parentid].inUse == true)){
-					glm::vec3 temp = seg[seg[i].parentid].pivot;
-					model = glm::translate(model, temp); 
+					glm::vec3 temp = seg[seg[i].parentid].endpoint + seg[seg[i].parentid].beginpoint;
+					seg[i].beginpoint = temp;
+					model = glm::translate(model, temp);
 				}
 
 				loc = glGetUniformLocation(this->programID, "model");
-				glUniformMatrix4fv(loc, 1, GL_FALSE, &(model[0][0]));
+				// glUniformMatrix4fv(loc, 1, GL_FALSE, &(seg[i].model[0][0]));
+				glUniformMatrix4fv(loc, 1, GL_FALSE, &model[0][0]);
 
 				// load the data into the VBO
 
@@ -320,8 +343,6 @@ namespace samsRobot{
 
 	robotGL::~robotGL(){
 		// cleanup vertex and index data
-		// delete this->vertex_data;
-		// delete this->index_data;
 		// delete should automatically be called when segments go out of existence but we'll be explicit
 		for (int i = 0; i < MAX_NUM_SEGMENTS; i++)
 			unset_segProps(i);
@@ -361,19 +382,19 @@ namespace samsRobot{
 	}
 
 	void robotGL::reset_view(void){
-		cameraPos   = glm::vec3(0.0f, 0.0f, 5.0f);
-		cameraFront = glm::normalize(glm::vec3(0.0f,0.0f,-1.0f));
-		cameraUp    = glm::vec3(0.0f, 1.0f, 0.0f);
+		cameraPos   = glm::vec3(10.0f, -10.0f, 10.0f);
+		cameraFront = glm::normalize(glm::vec3(0.0f,-1.0f,0.0f));
+		cameraFront = glm::normalize(-cameraPos);
+		cameraUp    = glm::vec3(0.0f, 0.0f, 1.0f);
 		// glfw_resize_callback(this->window, SCR_WIDTH, SCR_HEIGHT);
 	}
 
 	void robotGL::create_cuboid(const robotSeg segment){
 		// create a cuboid for the segment passed - using indexing
 		// each cuboid has 6 faces, 2 triangles per face, 3 vertices per triangle (no indexing), 3 floats per vertex
-		float x,y,z, cr,cg,cb, px,py,pz;
+		float x,y,z, cr,cg,cb;
 		segment.get_dimensions(x, y, z);
 		segment.get_colors(cr, cg, cb);
-		segment.get_pivot(px, py, pz);
 
 		/*
 		 * 	   z
@@ -394,32 +415,38 @@ namespace samsRobot{
 		// lets define our cuboid faces use end quads bounded by vertices abcdefg
 		// a(l,0,0), b(l,w,0), c(l,0,h), d(l,w,h)
 		// h(0,0,0). g(0,w,0), e(0,0,h), f(0,w,h);
-		// all vertices then translated back halfway to centralise them
-		struct myvec3 {float x; float y; float z;};
-		myvec3 a{.x=x/2,.y=-y/2,.z=-z/2}, b{.x=x/2,.y=y/2,.z=-z/2}, c{.x=x/2,.y=-y/2,.z=z/2}, d{.x=x/2,.y=y/2,.z=z/2};
-		myvec3 h{.x=-x/2,.y=-y/2,.z=-z/2}, g{.x=-x/2,.y=y/2,.z=-z/2}, e{.x=-x/2,.y=-y/2,.z=z/2}, f{.x=-x/2,.y=y/2,.z=z/2};
+		glm::vec3 a, b, c, d, e, f, g, h;
+		if(segment.get_axis() != 0){ 
+			// this is not an axis, dont centre it
+			a = glm::vec3(x/2,-y/2,-z/2); b = glm::vec3(x/2,y/2,-z/2); c = glm::vec3(x/2,-y/2,z/2); d = glm::vec3(x/2,y/2,z/2);
+			h = glm::vec3(-x/2,-y/2,-z/2); g = glm::vec3(-x/2,y/2,-z/2); e = glm::vec3(-x/2,-y/2,z/2); f = glm::vec3(-x/2,y/2,z/2);
+		}else{
+			a = glm::vec3(x,0,0); b = glm::vec3(x,y,0); c = glm::vec3(x,0,z); d = glm::vec3(x,y,z);
+			h = glm::vec3(0,0,0); g = glm::vec3(0,y,0); e = glm::vec3(0,0,z); f = glm::vec3(0,y,z);
+		}
+		
 
 		// use an initializer list to fill values quickly, and presume memory allocated successfully;
 		const float* vertices = new float[8*8]{
 			// position		//color		// texture
 			// vertices in near face
 			a.x, a.y, a.z, 		cr, cg, cb, 	0.0f, 0.0f,
-				b.x, b.y, b.z, 		cr, cg, cb,	1.0f, 0.0f,
-				c.x, c.y, c.z, 		cr, cg, cb,	0.0f, 1.0f,
-				d.x, d.y, d.z, 		cr, cg, cb,	1.0f, 1.0f, 
-				// vertices in far face
-				e.x, e.y, e.z,		cr, cg, cb,	1.0f, 1.0f,
-				f.x, f.y, f.z,		cr, cg, cb,	0.0f, 1.0f,
-				g.x, g.y, g.z, 		cr, cg, cb,	0.0f, 0.0f,
-				h.x, h.y, h.z,		cr, cg, cb,	1.0f, 0.0f
+			b.x, b.y, b.z, 		cr, cg, cb,	1.0f, 0.0f,
+			c.x, c.y, c.z, 		cr, cg, cb,	0.0f, 1.0f,
+			d.x, d.y, d.z, 		cr, cg, cb,	1.0f, 1.0f, 
+			// vertices in far face
+			e.x, e.y, e.z,		cr, cg, cb,	1.0f, 1.0f,
+			f.x, f.y, f.z,		cr, cg, cb,	0.0f, 1.0f,
+			g.x, g.y, g.z, 		cr, cg, cb,	0.0f, 0.0f,
+			h.x, h.y, h.z,		cr, cg, cb,	1.0f, 0.0f
 		};
 		const unsigned int* indices = new unsigned int[36]{
 			0, 1, 2, 1, 3, 2, // near face
-				2, 3, 4, 3, 5, 4, // top face
-				6, 7, 5, 7, 4, 5, // far face
-				0, 1, 7, 1, 6, 7, // bottom face
-				1, 6, 3, 6, 5, 3, // near side face
-				7, 0, 4, 0, 2, 4 // far side face
+			2, 3, 4, 3, 5, 4, // top face
+			6, 7, 5, 7, 4, 5, // far face
+			0, 1, 7, 1, 6, 7, // bottom face
+			1, 6, 3, 6, 5, 3, // near side face
+			7, 0, 4, 0, 2, 4 // far side face
 		};
 
 		if((vertices == NULL) || (indices ==NULL)){
@@ -428,11 +455,12 @@ namespace samsRobot{
 		}
 
 		set_mat(segment.getID(), vertices, indices, 8, 36);
-		set_segProps(segment.getID(), glm::vec3(cr, cg, cb), glm::vec3(px, py, pz), glm::vec3(cr, cg, cb), segment.getParentID());
+		// set_segProps(segment.getID(), glm::vec3(cr, cg, cb), glm::vec3(x, y, z), glm::vec3(cr, cg, cb), segment.getParentID(), segment.get_axis());
+		set_segProps(segment.getID(), glm::vec3(cr, cg, cb), glm::vec3(x, 0, 0), glm::vec3(cr, cg, cb), segment.getParentID(), segment.get_axis());
 
 		// clean up
-		delete vertices;
-		delete indices;
+		delete vertices; vertices = NULL;
+		delete indices; indices = NULL;
 	}
 
 	void robotGL::glfw_resize_callback(GLFWwindow* window, int width, int height){
@@ -470,31 +498,38 @@ namespace samsRobot{
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
 
-	void robotGL::set_segProps(const unsigned int id, const glm::vec3 col, const glm::vec3 pivot, const glm::vec3 orient, const unsigned int parentID){
+	void robotGL::set_segProps(const unsigned int id, const glm::vec3 col, const glm::vec3 endpoint, const glm::vec3 orient, const unsigned int parentID, const unsigned int axis){
 
 		if((id < 0) || (id >= MAX_NUM_SEGMENTS)) return;
 
 		seg[id].id = id; // should use a more clever unique id, really - this is redundant
 		seg[id].inUse = true;
 		seg[id].colour = col;
-		seg[id].pivot = pivot;
+		seg[id].endpoint = endpoint;
 		seg[id].orient = orient;
 		seg[id].parentid = parentID;
-
-		this->numValidSegs++;
+		seg[id].axis = axis;
+		seg[id].model = glm::mat4(1.0f);
 	}
 
 	void robotGL::unset_segProps(const unsigned int id){
 
 		if((id < 0) || (id >= MAX_NUM_SEGMENTS)) return;
+
 		seg[id].inUse = false;
-		delete seg[id].vertex_data;
-		delete seg[id].index_data;
+		if (seg[id].vertex_data != NULL){
+			delete seg[id].vertex_data;
+			seg[id].vertex_data = NULL;
+		}
+		if (seg[id].index_data != NULL){
+			delete seg[id].index_data;
+			seg[id].index_data = NULL;
+		}
 
 		glm::vec3 temp(0.0f,0.0f,0.0f);
-		set_segProps(id, temp, temp, temp);
-		// decrement number of valid segments too!
-		this->numValidSegs--;
+		set_segProps(id, temp, temp, temp, 0, 0);
+		seg[id].model = glm::mat4(1.0f);
+		seg[id].beginpoint = glm::vec3(0);
 	}
 
 	// void robotGL::glfw_key_callback(GLFWwindow* window, int key, int scanmode, int action, int modifier){

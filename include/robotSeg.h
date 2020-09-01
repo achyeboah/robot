@@ -17,12 +17,13 @@ namespace samsRobot{
 		private:
 			// graphics attributes, potentially useful also for physics
 			float size_x, size_y, size_z; // in mm
-			float pivot_x, pivot_y, pivot_z; // pivot for child objects
 			float col_r, col_g, col_b; // rgba
 			robotSeg* parent;
 
 			// hopefully unique id
 			unsigned int id;
+			// is this an axis (0) or not?
+			unsigned int isAxis;
 
 		public:
 			robotSeg(); // presumes dimensions are 1,1,1, color red, 
@@ -31,10 +32,10 @@ namespace samsRobot{
 			// link management items
 			void get_dimensions(float &l, float &w, float &h) const;
 			void set_dimensions(const float l, const float w, const float h);
-			void get_pivot(float &x, float &y, float &z) const;
-			void set_pivot(const float x, const float y, const float z);
 			void get_colors(float &r, float &g, float &b) const;
 			void set_colors(const float r, const float g, const float b);
+			void set_axis(const unsigned int axis);
+			unsigned int get_axis(void) const;
 
 			robotSeg* getParent(void) const;
 			unsigned int getParentID(void) const;

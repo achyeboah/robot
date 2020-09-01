@@ -52,11 +52,13 @@ namespace samsRobot{
 
 	struct segProps{
 		unsigned int id; // just so we can make sure we're talking to right segment, taken from seg.id
-		unsigned int parentid; // allows us to place this in position relative to its parent pivot point
+		unsigned int parentid; // allows us to place this in position relative to its parent end point
+		unsigned int axis; // is this an axis (non-zero), dont texture it
 		bool inUse; // is this segment in use?
 		glm::vec3 colour; // contains the colours from the segment
-		glm::vec3 pivot; // contains the pivot (for translation of any child)
+		glm::vec3 beginpoint, endpoint; // contains the (updated! by shader?) endpoint (for translation of any child)
 		glm::vec3 orient; // contains the orientation data (for rotations) of the segment
+		glm::mat4 model; // records any translations/rotations applied to this matrix
 		GLfloat* vertex_data; // vertex data (position, color and texture)
 		unsigned int* index_data; // actual float data
 		int numVertices, numIndices; // number of vertices and indices (not always equal!)
@@ -83,7 +85,6 @@ namespace samsRobot{
 
 			// each seg contains a unique robot segment
 			segProps seg[MAX_NUM_SEGMENTS]; // allocate space for some segments
-			unsigned int numValidSegs; // number of valid segments
 
 		public:
 			robotGL(bool fullscreen = false);
@@ -105,11 +106,10 @@ namespace samsRobot{
 
 			void create_cuboid(const robotSeg segment);
 			void set_mat(const unsigned int id, const float* ,const unsigned int*, const int , const int);
-			void set_segProps(const unsigned int id, const glm::vec3 col, const glm::vec3 pivot, const glm::vec3 orient, const unsigned int parentid = 0);
+			void set_segProps(const unsigned int id, const glm::vec3 col, const glm::vec3 endpoint, const glm::vec3 orient, const unsigned int parentID, const unsigned int axis);
 			GLfloat* get_mat(const unsigned int id, int &size) const;
 			unsigned int* get_ind(const unsigned int id, int &size) const;
 			void unset_segProps(const unsigned int id);
-			inline unsigned int getNumValidSegs(void){ return numValidSegs;}
 
 			// callbacks
 			static void glfw_resize_callback(GLFWwindow* window, int width, int height);
