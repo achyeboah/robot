@@ -255,12 +255,12 @@ void* draw_graphics(void*){
 	float elapsedTime = 0.0f;
 
 	do{
-		elapsedTime += 0.05;
+		elapsedTime += 0.01;
 
-		seg1_pitch = sin(elapsedTime);
-		seg2_pitch = cos(elapsedTime);
-		seg3_pitch = sin(elapsedTime); 
-		seg4_pitch = cos(elapsedTime);
+		seg1_pitch = 57.0f*sin(elapsedTime);
+		seg2_pitch = 57.0f*cos(elapsedTime);
+		seg3_pitch = 57.0f*sin(elapsedTime); 
+		seg4_pitch = 57.0f*cos(elapsedTime);
 		glWin.set_segAngles(seg1.getID(), seg1_pitch, 0, 0);
 		glWin.set_segAngles(seg2.getID(), 0, seg2_pitch, 0);
 		glWin.set_segAngles(seg3.getID(), 0, 0, seg3_pitch);
@@ -268,7 +268,7 @@ void* draw_graphics(void*){
 
 	 	glWin.updateScreen();
 		robotGL_fps = glWin.get_fps();
-		usleep(50000); // achieving 80fps with 10ms sleep, 20fps with 50ms sleep
+		usleep(20000); // achieving 80fps with 10ms sleep, 20fps with 50ms sleep
 	}while(glWin.get_progFinished() == FALSE);
 
 	// send a message to other threads that its time to quit!

@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#define GLM_SWIZZLE
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 using namespace glm;
@@ -272,37 +273,41 @@ namespace samsRobot{
 
 		for (int i = 0; i < MAX_NUM_SEGMENTS; i++){
 			if (this->seg[i].inUse == true){
-				// lets make sure we're putting the data in the right place - ie before we load it into VBO
-				glm::mat4 model = glm::mat4(1.0f);
 
-				// just for jokes
+				// algorithm
+				// rmodel: derive pitch,roll,yaw rotation matrix
+				// no parent: apply the rmodel, and save rmodel to segment (children will use this model and configured endpoint to derive their beginpoint)
+				// has parent: apply the rmodel, also include translate segment to model = rmodel + (tmodel =  parents(model*endpoint)), save this model to curr segment
+				// repeat
+
+				// lets make sure we're putting the data in the right place - ie before we load it into VBO
+				glm::mat4 rmodel = glm::mat4(1.0f); // records rotations
+				glm::mat4 tmodel = glm::mat4(1.0f); // records translations
+				glm::mat4 model = glm::mat4(1.0f); // holds product of rotation followed by translation
+
 				if(seg[i].axis == 0){
-					// float rot_x_ax = sin(glfwGetTime());
-					// float rot_y_ax = cos(glfwGetTime());
-					float rot_x_ax = seg[i].pitch;
-					float rot_y_ax = seg[i].roll;
-					float rot_z_ax = seg[i].yaw;
 					// rotations are in radians!
-					model = glm::rotate(model, (rot_x_ax), glm::vec3(1.0f, 0.0f, 0.0f)); // based on IMU info
-					model = glm::rotate(model, (rot_y_ax), glm::vec3(0.0f, 1.0f, 0.0f)); // based on IMU info
-					model = glm::rotate(model, (rot_z_ax), glm::vec3(0.0f, 0.0f, 1.0f)); // based on IMU info
+					rmodel = glm::rotate(rmodel, glm::radians(seg[i].pitch), glm::vec3(1.0f, 0.0f, 0.0f)); // based on IMU info
+					rmodel = glm::rotate(rmodel, glm::radians(seg[i].roll), glm::vec3(0.0f, 1.0f, 0.0f)); // based on IMU info
+					rmodel = glm::rotate(rmodel, glm::radians(seg[i].yaw), glm::vec3(0.0f, 0.0f, 1.0f)); // based on IMU info
 				}
 				
-				// capture the existing record of trans/rots in model
-				// model = seg[i].model * model;
-				// seg[i].model = model;
-
-				// check if this has a parent (ie a non-zero parent id)
-				// and translate it such that it is centred (for rotation) around the endpoint of the parent, else use the given centre
-				// check its valid and check that parent has been loaded for use
+				// check if this has a valid+loaded parent (ie a non-zero parent id)
+				// and translate it to endpoint of the parent, else use (0,0,0) for translation
 				if((seg[i].parentid != 0) && (seg[seg[i].parentid].inUse == true)){
-					glm::vec3 temp = seg[seg[i].parentid].endpoint + seg[seg[i].parentid].beginpoint;
-					seg[i].beginpoint = temp;
-					model = glm::translate(model, temp);
+					glm::vec3 temp = seg[seg[i].parentid].endpoint;
+					tmodel = seg[seg[i].parentid].model;
+					tmodel = glm::translate(tmodel, temp); 
+				}else{
+					glm::vec3 temp = glm::vec3(1.0f);
+					tmodel = glm::translate(rmodel, temp);
 				}
 
+				// capture the existing record of trans+rots in segment
+				model = tmodel * rmodel;
+				seg[i].model = model; // this is where i am now
+
 				loc = glGetUniformLocation(this->programID, "model");
-				// glUniformMatrix4fv(loc, 1, GL_FALSE, &(seg[i].model[0][0]));
 				glUniformMatrix4fv(loc, 1, GL_FALSE, &model[0][0]);
 
 				// load the data into the VBO
@@ -485,8 +490,7 @@ namespace samsRobot{
 		}
 
 		set_mat(segment.getID(), vertices, indices, 8, 36);
-		// set_segProps(segment.getID(), glm::vec3(cr, cg, cb), glm::vec3(x, y, z), glm::vec3(cr, cg, cb), segment.getParentID(), segment.get_axis());
-		set_segProps(segment.getID(), glm::vec3(cr, cg, cb), glm::vec3(x, 0, 0), glm::vec3(cr, cg, cb), segment.getParentID(), segment.get_axis());
+		set_segProps(segment.getID(), glm::vec3(cr, cg, cb), glm::vec3(x, 0, 0), segment.getParentID(), segment.get_axis());
 
 		// clean up
 		delete vertices; vertices = NULL;
@@ -528,7 +532,7 @@ namespace samsRobot{
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
 
-	void robotGL::set_segProps(const unsigned int id, const glm::vec3 col, const glm::vec3 endpoint, const glm::vec3 orient, const unsigned int parentID, const unsigned int axis){
+	void robotGL::set_segProps(const unsigned int id, const glm::vec3 col, const glm::vec3 endpoint, const unsigned int parentID, const unsigned int axis){
 
 		if((id < 0) || (id >= MAX_NUM_SEGMENTS)) return;
 
@@ -536,7 +540,6 @@ namespace samsRobot{
 		seg[id].inUse = true;
 		seg[id].colour = col;
 		seg[id].endpoint = endpoint;
-		seg[id].orient = orient;
 		seg[id].parentid = parentID;
 		seg[id].axis = axis;
 		seg[id].model = glm::mat4(1.0f);
@@ -572,9 +575,8 @@ namespace samsRobot{
 		}
 
 		glm::vec3 temp(0.0f,0.0f,0.0f);
-		set_segProps(id, temp, temp, temp, 0, 0);
+		set_segProps(id, temp, temp, 0, 0);
 		seg[id].model = glm::mat4(1.0f);
-		seg[id].beginpoint = glm::vec3(0);
 		seg[id].pitch = 0.0f;
 		seg[id].yaw = 0.0f;
 		seg[id].roll = 0.0f;

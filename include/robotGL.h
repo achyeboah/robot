@@ -56,8 +56,7 @@ namespace samsRobot{
 		unsigned int axis; // is this an axis (non-zero), dont texture it
 		bool inUse; // is this segment in use?
 		glm::vec3 colour; // contains the colours from the segment
-		glm::vec3 beginpoint, endpoint; // contains the (updated! by shader?) endpoint (for translation of any child)
-		glm::vec3 orient; // contains the orientation data (for rotations) of the segment
+		glm::vec3 endpoint; // contains the (updated! by shader?) endpoint (for translation of any child)
 		glm::mat4 model; // records any translations/rotations applied to this matrix
 		GLfloat* vertex_data; // vertex data (position, color and texture)
 		unsigned int* index_data; // actual float data
@@ -111,7 +110,7 @@ namespace samsRobot{
 
 			void create_cuboid(const robotSeg segment);
 			void set_mat(const unsigned int id, const float* ,const unsigned int*, const int , const int);
-			void set_segProps(const unsigned int id, const glm::vec3 col, const glm::vec3 endpoint, const glm::vec3 orient, const unsigned int parentID, const unsigned int axis);
+			void set_segProps(const unsigned int id, const glm::vec3 col, const glm::vec3 endpoint, const unsigned int parentID, const unsigned int axis);
 			GLfloat* get_mat(const unsigned int id, int &size) const;
 			unsigned int* get_ind(const unsigned int id, int &size) const;
 			void unset_segProps(const unsigned int id);
