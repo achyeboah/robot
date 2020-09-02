@@ -36,7 +36,7 @@ int motor_status = 0;
 
 // create just one segment to start with
 // global because accessed by multiple threads
-robotSeg x_axis, y_axis, z_axis, seg1, seg2, seg3, seg4;
+robotSeg x_axis, y_axis, z_axis, seg1, seg2, seg3, seg4, seg5;
 
 int main(int argc, char **argv)
 {
@@ -51,38 +51,6 @@ int main(int argc, char **argv)
 	bool do_curses = FALSE;
 	bool do_gl = FALSE;
 	int opt; // track options
-
-	// create axes here
-	x_axis.setID(1);
-	x_axis.set_axis(1);
-	x_axis.set_dimensions(100,0.05,0.05);
-	x_axis.set_colors(1,0.0,0.0);
-	y_axis.setID(2);
-	y_axis.set_axis(1);
-	y_axis.set_dimensions(0.05,100,0.05);
-	y_axis.set_colors(0,1,0);
-	z_axis.setID(3);
-	z_axis.set_axis(1);
-	z_axis.set_dimensions(0.05,0.05,100);
-	z_axis.set_colors(0,0,1);
-
-	// create robot here
-	seg1.setID(5);
-	seg1.set_dimensions(5,1,1);
-	seg1.set_colors(0.3,0.1,0.1);
-	seg2.setID(6);
-	seg2.set_dimensions(5,1,1);
-	seg2.set_colors(0.3,0.5,0.1);
-	seg2.setParent(&seg1);
-	seg3.setID(7);
-	seg3.set_dimensions(5,1,1);
-	seg3.set_colors(0.3,0.1,0.5);
-	seg3.setParent(&seg2);
-	seg4.setID(8);
-	seg4.set_dimensions(5,1,1);
-	seg4.set_colors(0.3,0.1,0.5);
-	seg4.setParent(&seg3);
-
 	if (argc < 2){
 		print_usage(argc, argv);
 		exit(EXIT_FAILURE);
@@ -236,6 +204,44 @@ void init_motors(void){
 
 void* draw_graphics(void*){
 	robotGL glWin(do_fullscreen);
+	// our window was created successfully (should check this!)
+
+	// create axes here
+	x_axis.setID(1);
+	x_axis.set_axis(1);
+	x_axis.set_dimensions(100,0.05,0.05);
+	x_axis.set_colors(1,0.0,0.0);
+	y_axis.setID(2);
+	y_axis.set_axis(1);
+	y_axis.set_dimensions(0.05,100,0.05);
+	y_axis.set_colors(0,1,0);
+	z_axis.setID(3);
+	z_axis.set_axis(1);
+	z_axis.set_dimensions(0.05,0.05,100);
+	z_axis.set_colors(0,0,1);
+
+	// create robot here
+	seg1.setID(5);
+	seg1.set_dimensions(0.1,0.1,0.1);
+	seg1.set_colors(0.3,0.3,0.3);
+	seg2.setID(6);
+	seg2.set_dimensions(5,0.1,0.1);
+	seg2.set_colors(0.3,0.5,0.3);
+	seg2.setParent(&seg1);
+	seg3.setID(7);
+	seg3.set_dimensions(5,0.1,0.1);
+	seg3.set_colors(0.5,0.3,0.5);
+	seg3.setParent(&seg2);
+	seg4.setID(8);
+	seg4.set_dimensions(3,0.1,0.1);
+	seg4.set_colors(0.3,0.5,0.5);
+	seg4.setParent(&seg3);
+	seg5.setID(9);
+	seg5.set_dimensions(3,0.1,0.1);
+	seg5.set_colors(0.3,0.5,0.5);
+	seg5.setParent(&seg3);
+
+
 	// need to pass in some parameters
 	glWin.set_bg(0.0f, 0.0f, 0.1f, 0.2f);
 
@@ -243,11 +249,12 @@ void* draw_graphics(void*){
 	glWin.create_cuboid(seg2);	
 	glWin.create_cuboid(seg3);	
 	glWin.create_cuboid(seg4);	
+	glWin.create_cuboid(seg5);	
 	glWin.create_cuboid(x_axis);
 	glWin.create_cuboid(y_axis);
 	glWin.create_cuboid(z_axis);
 
-	float seg1_pitch=0.0f;
+	// seg1 does not move
 	float seg2_pitch=0.0f;
 	float seg3_pitch=0.0f;
 	float seg4_pitch=0.0f;
@@ -257,14 +264,13 @@ void* draw_graphics(void*){
 	do{
 		elapsedTime += 0.01;
 
-		seg1_pitch = 57.0f*sin(elapsedTime);
 		seg2_pitch = 57.0f*cos(elapsedTime);
 		seg3_pitch = 57.0f*sin(elapsedTime); 
-		seg4_pitch = 57.0f*cos(elapsedTime);
-		glWin.set_segAngles(seg1.getID(), seg1_pitch, 0, 0);
+		seg4_pitch = 57.0f*(sin(-elapsedTime)*cos(elapsedTime));
 		glWin.set_segAngles(seg2.getID(), 0, seg2_pitch, 0);
 		glWin.set_segAngles(seg3.getID(), 0, 0, seg3_pitch);
-		glWin.set_segAngles(seg4.getID(), seg4_pitch, 0, seg4_pitch);
+		glWin.set_segAngles(seg4.getID(), 0, seg4_pitch ,seg3_pitch );
+		glWin.set_segAngles(seg5.getID(), 0, seg4_pitch, -seg3_pitch);
 
 	 	glWin.updateScreen();
 		robotGL_fps = glWin.get_fps();

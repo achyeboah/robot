@@ -403,10 +403,10 @@ namespace samsRobot{
 		// positive X axis is (thumb) towards right of screen
 		// positive Y axis is (fore finger) towards top of screen
 		// positive Z axis is (mid finger) out of screen towards me
-		cameraPos   = glm::vec3(0.0f, 0.0f, 10.0f);
+		cameraPos = glm::vec3(0.0f, 0.0f, 10.0f);
 		cameraFront = glm::normalize(glm::vec3(0.0f,0.0f, -1.0f));
 		// cameraFront = glm::normalize(-cameraPos);
-		cameraUp    = glm::vec3(0.0f, 1.0f, 0.0f);
+		cameraUp    = glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f));
 		firstMouse = true;
 		fov = 45.0f;
 		yaw  = -90.0f;	// yaw is initialized to -90.0 degrees since a yaw of 0.0 results in a direction vector pointing to the right so we initially rotate a bit to the left.
@@ -490,7 +490,7 @@ namespace samsRobot{
 		}
 
 		set_mat(segment.getID(), vertices, indices, 8, 36);
-		set_segProps(segment.getID(), glm::vec3(cr, cg, cb), glm::vec3(x, 0, 0), segment.getParentID(), segment.get_axis());
+		set_segProps(segment.getID(), glm::vec3(cr, cg, cb), glm::vec3(1.01*x, y/2, z/2), segment.getParentID(), segment.get_axis());
 
 		// clean up
 		delete vertices; vertices = NULL;
