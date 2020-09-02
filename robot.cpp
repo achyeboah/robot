@@ -36,7 +36,7 @@ int motor_status = 0;
 
 // create just one segment to start with
 // global because accessed by multiple threads
-robotSeg x_axis, y_axis, z_axis;
+robotSeg ground, up_axis;
 
 // create a structure to house our robot!
 struct myRobot{
@@ -215,21 +215,18 @@ void* draw_graphics(void*){
 	// our window was created successfully (should check this!)
 
 	// create axes here
-	x_axis.setID(1);
-	x_axis.set_axis(1);
-	x_axis.set_dimensions(1000,0.05,0.05);
-	x_axis.set_colors(0.5,0.5,0.5);
-	y_axis.setID(2);
-	y_axis.set_axis(1);
-	y_axis.set_dimensions(0.05,1000,0.05);
-	y_axis.set_colors(0.5,0.5,0.5);
-	z_axis.setID(3);
-	z_axis.set_axis(1);
-	z_axis.set_dimensions(0.05,0.05,1000);
-	z_axis.set_colors(0.5,0.5,0.5);
+	up_axis.setID(2);
+	up_axis.set_axis(1);
+	up_axis.set_dimensions(0.05,1000,0.05);
+	up_axis.set_colors(0.5,0.5,0.5);
+	ground.setID(3);
+	ground.set_axis(1);
+	ground.set_dimensions(1000.0,0.01,1000);
+	ground.set_colors(0.4,0.4,0.4);
 
 	// create robot here
 	theRobot.base.setID(5);
+	// theRobot.base.set_axis(0.1);
 	theRobot.base.set_dimensions(1);
 	theRobot.base.set_colors(0.3,0.3,0.3);
 	theRobot.boom.setID(6);
@@ -253,23 +250,31 @@ void* draw_graphics(void*){
 	glWin.create_cuboid(theRobot.dipper);	
 	glWin.create_cuboid(theRobot.bucket);	
 
-	glWin.create_cuboid(x_axis);
-	glWin.create_cuboid(y_axis);
-	glWin.create_cuboid(z_axis);
+	glWin.create_cuboid(up_axis);
+	glWin.create_cuboid(ground);
 
 	// seg1 does not move
+	float seg1_pitch=0.0f;
 	float seg2_pitch=0.0f;
 	float seg3_pitch=0.0f;
 	float seg4_pitch=0.0f;
 
-	float elapsedTime = 0.0f;
+	float elapsedTime0 = 0.0f;
+	float elapsedTime1 = 0.0f;
+	float elapsedTime2 = 0.0f;
+	float elapsedTime3 = 0.0f;
 
 	do{
-		elapsedTime += 0.02;
+		elapsedTime0 += 0.01;
+		elapsedTime1 += 0.02;
+		elapsedTime2 += 0.04;
+		elapsedTime3 += 0.03;
 
-		seg2_pitch = 57.0f*cos(elapsedTime);
-		seg3_pitch = 57.0f*sin(elapsedTime); 
-		seg4_pitch = 57.0f*(sin(-elapsedTime)*cos(elapsedTime));
+		seg1_pitch = 57.0f*cos(elapsedTime0);
+		seg2_pitch = 57.0f*cos(elapsedTime1);
+		seg3_pitch = 57.0f*sin(elapsedTime2); 
+		seg4_pitch = 57.0f*cos(elapsedTime3);
+		glWin.set_segAngles(theRobot.base.getID(), 0, 0, seg1_pitch); // needs some work
 		glWin.set_segAngles(theRobot.boom.getID(), 0, seg2_pitch, 0);
 		glWin.set_segAngles(theRobot.dipper.getID(), 0, seg3_pitch, 0);
 		glWin.set_segAngles(theRobot.bucket.getID(), 0, seg4_pitch, 0);
