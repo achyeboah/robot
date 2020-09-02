@@ -403,7 +403,7 @@ namespace samsRobot{
 		// positive X axis is (thumb) towards right of screen
 		// positive Y axis is (fore finger) towards top of screen
 		// positive Z axis is (mid finger) out of screen towards me
-		cameraPos = glm::vec3(0.0f, 0.0f, 10.0f);
+		cameraPos = glm::vec3(0.0f, 0.0f, 20.0f);
 		cameraFront = glm::normalize(glm::vec3(0.0f,0.0f, -1.0f));
 		// cameraFront = glm::normalize(-cameraPos);
 		cameraUp    = glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f));
@@ -490,7 +490,7 @@ namespace samsRobot{
 		}
 
 		set_mat(segment.getID(), vertices, indices, 8, 36);
-		set_segProps(segment.getID(), glm::vec3(cr, cg, cb), glm::vec3(1.01*x, y/2, z/2), segment.getParentID(), segment.get_axis());
+		set_segProps(segment.getID(), glm::vec3(cr, cg, cb), glm::vec3(x, 0, 0), segment.getParentID(), segment.get_axis());
 
 		// clean up
 		delete vertices; vertices = NULL;
@@ -606,13 +606,13 @@ namespace samsRobot{
 
 		// keys below move the camera position, mouse affects lookat and zoom
 		if (glfwGetKey(this->window, GLFW_KEY_UP) == GLFW_PRESS)
-			cameraPos -= (cameraUp)*cameraSpeed;
-		if (glfwGetKey(this->window, GLFW_KEY_DOWN) == GLFW_PRESS)
 			cameraPos += (cameraUp)*cameraSpeed;
+		if (glfwGetKey(this->window, GLFW_KEY_DOWN) == GLFW_PRESS)
+			cameraPos -= (cameraUp)*cameraSpeed;
 		if (glfwGetKey(this->window, GLFW_KEY_LEFT) == GLFW_PRESS)
-			cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-		if (glfwGetKey(this->window, GLFW_KEY_RIGHT) == GLFW_PRESS)
 			cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+		if (glfwGetKey(this->window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+			cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
 		if (glfwGetKey(this->window, GLFW_KEY_PAGE_UP) == GLFW_PRESS)
 			cameraPos += cameraSpeed * cameraFront;
 		if (glfwGetKey(this->window, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS)
@@ -636,7 +636,10 @@ namespace samsRobot{
 		lastX = xpos;
 		lastY = ypos;
 
-		float sensitivity = 0.1f; // change this value to your liking
+		// make sensitivity depend on fov
+		// ie when zoomed out (fov = 45.0f) be sensitive (sensitivity = 0.2)
+		// but when zoomed in (fov = 1.0f) be less sensitive (sensitivity = 0.05)
+		float sensitivity = fov * ((0.2f-0.05f)/(45.0f - 1.0f)) + (0.05f -(0.2f-0.05f)/(45.0f - 1.0f));
 		xoffset *= sensitivity;
 		yoffset *= sensitivity;
 

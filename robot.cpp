@@ -222,28 +222,28 @@ void* draw_graphics(void*){
 
 	// create robot here
 	seg1.setID(5);
-	seg1.set_dimensions(0.1,0.1,0.1);
+	seg1.set_dimensions(1);
 	seg1.set_colors(0.3,0.3,0.3);
 	seg2.setID(6);
-	seg2.set_dimensions(5,0.1,0.1);
+	seg2.set_dimensions(5);
 	seg2.set_colors(0.3,0.5,0.3);
 	seg2.setParent(&seg1);
 	seg3.setID(7);
-	seg3.set_dimensions(5,0.1,0.1);
+	seg3.set_dimensions(5);
 	seg3.set_colors(0.5,0.3,0.5);
 	seg3.setParent(&seg2);
 	seg4.setID(8);
-	seg4.set_dimensions(3,0.1,0.1);
+	seg4.set_dimensions(2);
 	seg4.set_colors(0.3,0.5,0.5);
 	seg4.setParent(&seg3);
 	seg5.setID(9);
-	seg5.set_dimensions(3,0.1,0.1);
+	seg5.set_dimensions(2);
 	seg5.set_colors(0.3,0.5,0.5);
 	seg5.setParent(&seg3);
 
 
-	// need to pass in some parameters
-	glWin.set_bg(0.0f, 0.0f, 0.1f, 0.2f);
+	// need to pass in some parameters (make opaque for now)
+	glWin.set_bg(0.0f, 0.0f, 0.1f, 1.0f);
 
 	glWin.create_cuboid(seg1);	
 	glWin.create_cuboid(seg2);	

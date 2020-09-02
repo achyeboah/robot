@@ -31,7 +31,7 @@ namespace samsRobot{
 
 			// link management items
 			void get_dimensions(float &l, float &w, float &h) const;
-			void set_dimensions(const float l, const float w, const float h);
+			void set_dimensions(const float l=1.0f, const float w=0.1f, const float h=0.1f);
 			void get_colors(float &r, float &g, float &b) const;
 			void set_colors(const float r, const float g, const float b);
 			void set_axis(const unsigned int axis);
