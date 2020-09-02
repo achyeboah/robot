@@ -36,7 +36,15 @@ int motor_status = 0;
 
 // create just one segment to start with
 // global because accessed by multiple threads
-robotSeg x_axis, y_axis, z_axis, seg1, seg2, seg3, seg4, seg5;
+robotSeg x_axis, y_axis, z_axis;
+
+// create a structure to house our robot!
+struct myRobot{
+	robotSeg base;
+	robotSeg boom;
+	robotSeg dipper;
+	robotSeg bucket;
+} theRobot;
 
 int main(int argc, char **argv)
 {
@@ -221,35 +229,30 @@ void* draw_graphics(void*){
 	z_axis.set_colors(0.5,0.5,0.5);
 
 	// create robot here
-	seg1.setID(5);
-	seg1.set_dimensions(1);
-	seg1.set_colors(0.3,0.3,0.3);
-	seg2.setID(6);
-	seg2.set_dimensions(5);
-	seg2.set_colors(0.3,0.5,0.3);
-	seg2.setParent(&seg1);
-	seg3.setID(7);
-	seg3.set_dimensions(5);
-	seg3.set_colors(0.5,0.3,0.5);
-	seg3.setParent(&seg2);
-	seg4.setID(8);
-	seg4.set_dimensions(2);
-	seg4.set_colors(0.3,0.5,0.5);
-	seg4.setParent(&seg3);
-	seg5.setID(9);
-	seg5.set_dimensions(2);
-	seg5.set_colors(0.3,0.5,0.5);
-	seg5.setParent(&seg3);
-
+	theRobot.base.setID(5);
+	theRobot.base.set_dimensions(1);
+	theRobot.base.set_colors(0.3,0.3,0.3);
+	theRobot.boom.setID(6);
+	theRobot.boom.set_dimensions(5);
+	theRobot.boom.set_colors(0.3,0.5,0.3);
+	theRobot.boom.setParent(&theRobot.base);
+	theRobot.dipper.setID(7);
+	theRobot.dipper.set_dimensions(5);
+	theRobot.dipper.set_colors(0.5,0.3,0.5);
+	theRobot.dipper.setParent(&theRobot.boom);
+	theRobot.bucket.setID(8);
+	theRobot.bucket.set_dimensions(2);
+	theRobot.bucket.set_colors(0.3,0.5,0.5);
+	theRobot.bucket.setParent(&theRobot.dipper);
 
 	// need to pass in some parameters (make opaque for now)
-	glWin.set_bg(0.0f, 0.0f, 0.1f, 1.0f);
+	glWin.set_bg(0.0f, 0.0f, 0.1f, 0.8f);
 
-	glWin.create_cuboid(seg1);	
-	glWin.create_cuboid(seg2);	
-	glWin.create_cuboid(seg3);	
-	glWin.create_cuboid(seg4);	
-	glWin.create_cuboid(seg5);	
+	glWin.create_cuboid(theRobot.base);	
+	glWin.create_cuboid(theRobot.boom);	
+	glWin.create_cuboid(theRobot.dipper);	
+	glWin.create_cuboid(theRobot.bucket);	
+
 	glWin.create_cuboid(x_axis);
 	glWin.create_cuboid(y_axis);
 	glWin.create_cuboid(z_axis);
@@ -262,15 +265,14 @@ void* draw_graphics(void*){
 	float elapsedTime = 0.0f;
 
 	do{
-		elapsedTime += 0.01;
+		elapsedTime += 0.02;
 
 		seg2_pitch = 57.0f*cos(elapsedTime);
 		seg3_pitch = 57.0f*sin(elapsedTime); 
 		seg4_pitch = 57.0f*(sin(-elapsedTime)*cos(elapsedTime));
-		glWin.set_segAngles(seg2.getID(), 0, seg2_pitch, 0);
-		glWin.set_segAngles(seg3.getID(), 0, 0, seg3_pitch);
-		glWin.set_segAngles(seg4.getID(), 0, seg4_pitch ,seg3_pitch );
-		glWin.set_segAngles(seg5.getID(), 0, seg4_pitch, -seg3_pitch);
+		glWin.set_segAngles(theRobot.boom.getID(), 0, seg2_pitch, 0);
+		glWin.set_segAngles(theRobot.dipper.getID(), 0, seg3_pitch, 0);
+		glWin.set_segAngles(theRobot.bucket.getID(), 0, seg4_pitch, 0);
 
 	 	glWin.updateScreen();
 		robotGL_fps = glWin.get_fps();
