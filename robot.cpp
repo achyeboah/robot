@@ -209,16 +209,16 @@ void* draw_graphics(void*){
 	// create axes here
 	x_axis.setID(1);
 	x_axis.set_axis(1);
-	x_axis.set_dimensions(100,0.05,0.05);
-	x_axis.set_colors(1,0.0,0.0);
+	x_axis.set_dimensions(1000,0.05,0.05);
+	x_axis.set_colors(0.5,0.5,0.5);
 	y_axis.setID(2);
 	y_axis.set_axis(1);
-	y_axis.set_dimensions(0.05,100,0.05);
-	y_axis.set_colors(0,1,0);
+	y_axis.set_dimensions(0.05,1000,0.05);
+	y_axis.set_colors(0.5,0.5,0.5);
 	z_axis.setID(3);
 	z_axis.set_axis(1);
-	z_axis.set_dimensions(0.05,0.05,100);
-	z_axis.set_colors(0,0,1);
+	z_axis.set_dimensions(0.05,0.05,1000);
+	z_axis.set_colors(0.5,0.5,0.5);
 
 	// create robot here
 	seg1.setID(5);
