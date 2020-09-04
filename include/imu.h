@@ -143,6 +143,8 @@ namespace samsRobot{
 
 			virtual float getTemp(void) const;
 
+			virtual float getHeading(void) const;
+
 			virtual IMU_TYPE getIMUtype (void) const;
 			virtual void setIMUtype(const imu::IMU_TYPE type);
 

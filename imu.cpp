@@ -268,6 +268,10 @@ namespace samsRobot {
 		this->init();
 	}
 
+	float imu::getHeading(void) const{
+		//fuse the compass readings into a heading in degrees (ie between 0 (MAG NORTH) and 359)
+		return fmagX + fmagY + fmagZ;
+	}
 
  } // namespace
 

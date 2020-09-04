@@ -177,21 +177,19 @@ void* update_robot_status(void*){
 	float curr_yaw = 0, prev_yaw = 0;
 	float curr_pitch = 0, prev_pitch = 0;
 	float curr_roll = 0, prev_roll = 0;
+	float curr_head = 0, prev_head = 0;
 	float temp = 0.0f;
-
-	int x,y;
 	
-	// static mpu6050 boomIMU(1,0x68);
+	// need a better way to track data from all the IMUs and fuse them
+	theRobot.boomIMU = new imu(1, 0x68, imu::MPU9250); 
 
 	do{
-		// get the current accelerometer values
-		//
-		/*
-		boomIMU.readSensorState();
-		curr_yaw = boomIMU.getYaw();
-		curr_pitch = boomIMU.getPitch();
-		curr_roll = boomIMU.getRoll();
-		temp = boomIMU.getTemp();
+		theRobot.boomIMU->readSensorState();
+		curr_yaw = theRobot.boomIMU->getYaw();
+		curr_pitch = theRobot.boomIMU->getPitch();
+		curr_roll = theRobot.boomIMU->getRoll();
+		curr_head = theRobot.boomIMU->getHeading();
+		temp = theRobot.boomIMU->getTemp();
 
 		if (((curr_yaw - prev_yaw) < YAW_THRESH) && 
 			((curr_pitch - prev_pitch) < PITCH_THRESH) &&
@@ -203,10 +201,14 @@ void* update_robot_status(void*){
 		prev_yaw = curr_yaw;
 		prev_pitch = curr_pitch;
 		prev_roll = curr_roll;
-*/
+		prev_head = curr_head;
+
 		// go to sleep for a bit
 		usleep(10000); // 10ms
 	}while ((current_key != 'q') && (current_key!='Q') && (quit_gl !=TRUE));
+
+	delete theRobot.boomIMU;
+
 	pthread_exit(0);
 }
 
