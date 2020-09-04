@@ -1,7 +1,5 @@
 #include "defs.h"
-#include "mpu6050.h"
-#include "mpu9250.h"
-#include "ak8963.h"
+#include "imu.h"
 #include "robotCurses.h"
 #include "robotGL.h"
 #include "robotSeg.h"
@@ -46,6 +44,9 @@ struct myRobot{
 	robotSeg dipper;
 	robotSeg bucket;
 	// robot IMUs go here
+	imu* boomIMU;
+	imu* dipperIMU;
+	imu* bucketIMU;
 } theRobot;
 
 int main(int argc, char **argv)
@@ -232,15 +233,16 @@ void* draw_graphics(void*){
 	theRobot.base.set_dimensions(1);
 	theRobot.base.set_colors(0.3,0.3,0.3);
 	theRobot.boom.setID(6);
-	theRobot.boom.set_dimensions(5);
+	theRobot.boom.set_dimensions(6);
 	theRobot.boom.set_colors(0.3,0.5,0.3);
 	theRobot.boom.setParent(&theRobot.base);
 	theRobot.dipper.setID(7);
-	theRobot.dipper.set_dimensions(5);
+	theRobot.dipper.set_dimensions(4);
 	theRobot.dipper.set_colors(0.5,0.3,0.5);
 	theRobot.dipper.setParent(&theRobot.boom);
 	theRobot.bucket.setID(8);
-	theRobot.bucket.set_dimensions(2);
+	theRobot.bucket.set_dimensions(1,1,1);
+	theRobot.bucket.set_axis(1);
 	theRobot.bucket.set_colors(0.3,0.5,0.5);
 	theRobot.bucket.setParent(&theRobot.dipper);
 

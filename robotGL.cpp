@@ -406,7 +406,7 @@ namespace samsRobot{
 		// positive X axis is (thumb) towards right of screen
 		// positive Y axis is (fore finger) towards top of screen
 		// positive Z axis is (mid finger) out of screen towards me
-		cameraPos = glm::vec3(0.0f, 10.0f, 10.0f);
+		cameraPos = glm::vec3(0.0f, 20.0f, 20.0f);
 		cameraFront = glm::normalize(glm::vec3(0.0f, -1.0f, -1.0f));
 		// cameraFront = glm::normalize(-cameraPos);
 		cameraUp    = glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f));
@@ -665,7 +665,7 @@ namespace samsRobot{
 	// glfw: whenever the mouse scroll wheel scrolls, this callback is called
 	// ----------------------------------------------------------------------
 	void robotGL::scroll_callback(GLFWwindow* window, double xoffset, double yoffset){
-		fov -= 3*(float)yoffset;
+		fov += 3*(float)yoffset;
 		if (fov < 1.0f)
 			fov = 1.0f;
 		if (fov > 45.0f)

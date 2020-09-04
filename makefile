@@ -12,10 +12,10 @@ ODIR_cross = obj_cross
 # LIBS = -lm -lncurses -lpthread -lGLU -lGL -lglfw3 -ldl -L/home/sam/src/openGLrobot/lib/ -lGLEW
 LIBS = -lm -lncurses -lpthread -lGLU -lGL -lglfw3 -ldl -lGLEW
 
-_DEPS = defs.h i2cdev.h GPIO.h mpu6050.h mpu9250.h ak8963.h robotGL.h robotCurses.h robotSeg.h stb_image.h
+_DEPS = defs.h i2cdev.h GPIO.h imu.h robotGL.h robotCurses.h robotSeg.h stb_image.h
 DEPS = $(patsubst %, $(IDIR)/%,$(_DEPS))
 
-_OBJ = robot.o i2cdev.o GPIO.o mpu6050.o mpu9250.o ak8963.o robotGL.o robotCurses.o robotSeg.o
+_OBJ = robot.o i2cdev.o GPIO.o imu.o robotGL.o robotCurses.o robotSeg.o
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 OBJ_cross = $(patsubst %,$(ODIR_cross)/%,$(_OBJ))
 
