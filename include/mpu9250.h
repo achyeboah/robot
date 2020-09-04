@@ -42,6 +42,7 @@ namespace samsRobot {
 
 #define MPU9250_TEMP_SENS 340 // 340 LSB/degC
 #define MPU9250_TEMP_OFFSET 36.53 // datasheet says -521 at 31degC,
+
 	/* class mpu9250. specific class for the mpu9250 accel/gyro on i2c.
 	 * protected inheritance to protect public parent methods
 	 */

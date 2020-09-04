@@ -40,10 +40,12 @@ robotSeg ground, up_axis;
 
 // create a structure to house our robot!
 struct myRobot{
+	// robot segments go here
 	robotSeg base;
 	robotSeg boom;
 	robotSeg dipper;
 	robotSeg bucket;
+	// robot IMUs go here
 } theRobot;
 
 int main(int argc, char **argv)
@@ -265,15 +267,15 @@ void* draw_graphics(void*){
 	float elapsedTime3 = 0.0f;
 
 	do{
-		elapsedTime0 += 0.01;
-		elapsedTime1 += 0.02;
-		elapsedTime2 += 0.04;
-		elapsedTime3 += 0.03;
+		elapsedTime0 += 0.02;
+		elapsedTime1 += 0.01;
+		elapsedTime2 += 0.01;
+		elapsedTime3 += 0.01;
 
-		seg1_pitch = 57.0f*cos(elapsedTime0);
-		seg2_pitch = 57.0f*cos(elapsedTime1);
-		seg3_pitch = 57.0f*sin(elapsedTime2); 
-		seg4_pitch = 57.0f*cos(elapsedTime3);
+		seg1_pitch = (57.0f*cos(elapsedTime0));
+		seg2_pitch = 20+abs(57.0f*cos(elapsedTime1));
+		seg3_pitch = -1 * abs(57.0f*sin(elapsedTime2)); 
+		seg4_pitch = -1* 57.0f*cos(elapsedTime3);
 		glWin.set_segAngles(theRobot.base.getID(), 0, 0, seg1_pitch); // needs some work
 		glWin.set_segAngles(theRobot.boom.getID(), 0, seg2_pitch, 0);
 		glWin.set_segAngles(theRobot.dipper.getID(), 0, seg3_pitch, 0);

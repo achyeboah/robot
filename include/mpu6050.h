@@ -41,7 +41,6 @@ namespace samsRobot {
 
 #define MPU6050_TEMP_SENS 340 // 340 LSB/degC
 #define MPU6050_TEMP_OFFSET 36.53 // datasheet says -521 at 31degC,
-// but see https://www.electronicwings.com/sensors-modules/mpu6050-gyroscope-accelerometer-temperature-sensor-module
 
 	/* class mpu6050. specific class for the mpu6050 accel/gyro on i2c.
 	 * protected inheritance to protect public parent methods

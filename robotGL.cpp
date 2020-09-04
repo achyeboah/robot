@@ -15,7 +15,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 using namespace glm;
 
-#include <iostream>
+// #include <iostream>
 
 namespace samsRobot{
 
@@ -137,7 +137,8 @@ namespace samsRobot{
 			fprintf(stderr, "RobotGL:INIT(). Compile VertShader program failed\n");
 			char infoLog[512];
 			glGetShaderInfoLog(vertex_shader, 512, NULL, infoLog);
-			std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;	
+			fprintf(stderr, "Error in VertexShader Compilation\n%s\n", infoLog);
+			// std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;	
 		}
 
 		this->fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -148,7 +149,8 @@ namespace samsRobot{
 			fprintf(stderr, "RobotGL:INIT(). Compile FragShader program failed\n");
 			char infoLog[512];
 		        glGetShaderInfoLog(fragment_shader, 512, NULL, infoLog);
-        		std::cout << "ERROR::SHADER::FRAG::COMPILATION_FAILED\n" << infoLog << std::endl;	
+			fprintf(stderr, "Error in VertexShader Compilation\n%s\n", infoLog);
+        		// std::cout << "ERROR::SHADER::FRAG::COMPILATION_FAILED\n" << infoLog << std::endl;	
 		}
 		this->programID = glCreateProgram();
 		glAttachShader(this->programID, this->vertex_shader);
@@ -160,7 +162,8 @@ namespace samsRobot{
 			fprintf(stderr, "RobotGL:INIT(). Link program failed\n");
 			char infoLog[512];
 		        glGetShaderInfoLog(programID, 512, NULL, infoLog);
-        		std::cout << "ERROR::LINK::FRAG::COMPILATION_FAILED\n" << infoLog << std::endl;	
+			fprintf(stderr, "Error in VertexShader Compilation\n%s\n", infoLog);
+        		// std::cout << "ERROR::LINK::FRAG::COMPILATION_FAILED\n" << infoLog << std::endl;	
 		}
 
 		glDeleteShader(this->vertex_shader);
@@ -299,7 +302,7 @@ namespace samsRobot{
 					tmodel = seg[seg[i].parentid].model;
 					tmodel = glm::translate(tmodel, temp); 
 				}else{
-					glm::vec3 temp = glm::vec3(1.0f);
+					glm::vec3 temp = glm::vec3(0.0f);
 					tmodel = glm::translate(rmodel, temp);
 				}
 
@@ -403,8 +406,8 @@ namespace samsRobot{
 		// positive X axis is (thumb) towards right of screen
 		// positive Y axis is (fore finger) towards top of screen
 		// positive Z axis is (mid finger) out of screen towards me
-		cameraPos = glm::vec3(0.0f, 0.0f, 20.0f);
-		cameraFront = glm::normalize(glm::vec3(0.0f,0.0f, -1.0f));
+		cameraPos = glm::vec3(0.0f, 10.0f, 10.0f);
+		cameraFront = glm::normalize(glm::vec3(0.0f, -1.0f, -1.0f));
 		// cameraFront = glm::normalize(-cameraPos);
 		cameraUp    = glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f));
 		firstMouse = true;
