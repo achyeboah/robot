@@ -15,7 +15,6 @@ namespace samsRobot{
 			WINDOW* w_input;
 
 			bool validWins;
-			bool motor_status = 0;
 			float ogl_fps = 3.1f;
 		public:
 			robotCurses();
@@ -25,7 +24,7 @@ namespace samsRobot{
 			void create_board(void);
 			void destroy_board(void);
 			void draw_board(int keypress = 0);
-			int update(int motor_status = 0);
+			int update(void);
 			
 			int init_screen(void);
 			bool getValidWins(void) const;

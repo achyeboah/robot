@@ -1,5 +1,6 @@
 #include "defs.h"
 #include "imu.h"
+#include "utils.h"
 #include "robotCurses.h"
 #include "robotGL.h"
 #include "robotSeg.h"
@@ -44,8 +45,6 @@ struct myRobot{
 	robotSeg bucket;
 	// robot IMUs go here
 	imu* boomIMU;
-	imu* dipperIMU;
-	imu* bucketIMU;
 } theRobot;
 
 int main(int argc, char **argv)
@@ -143,7 +142,7 @@ void* draw_curses(void*){
 		if (quit_gl != TRUE){
 
 			myscreen.set_ogl_fps(robotGL_fps);
-			keys = myscreen.update(motor_status); 
+			keys = myscreen.update(); 
 
 			// make the current key available to other threads
 			previous_key = current_key;
@@ -173,41 +172,28 @@ void* drive_motors(void*){
 
 
 void* update_robot_status(void*){
-	float curr_yaw = 0, prev_yaw = 0;
-	float curr_pitch = 0, prev_pitch = 0;
-	float curr_roll = 0, prev_roll = 0;
-	float curr_head = 0, prev_head = 0;
-	float temp = 0.0f;
-	
+	imu_data curr_data;
+
 	// need a better way to track data from all the IMUs and fuse them
-	theRobot.boomIMU = new imu(1, 0x68, imu::MPU9250); 
+	theRobot.boomIMU = new imu(1, 0x68, imu::MPU6050); 
 
 	do{
 		theRobot.boomIMU->readSensorState();
-		curr_yaw = theRobot.boomIMU->getYaw();
-		curr_pitch = theRobot.boomIMU->getPitch();
-		curr_roll = theRobot.boomIMU->getRoll();
-		curr_head = theRobot.boomIMU->getHeading();
-		temp = theRobot.boomIMU->getTemp();
 
-		if (((curr_yaw - prev_yaw) < YAW_THRESH) && 
-			((curr_pitch - prev_pitch) < PITCH_THRESH) &&
-			((curr_roll - prev_roll) < ROLL_THRESH))
-			motor_status = 0;
-		else
-			motor_status = 1;
-		
-		prev_yaw = curr_yaw;
-		prev_pitch = curr_pitch;
-		prev_roll = curr_roll;
-		prev_head = curr_head;
+		curr_data.yaw = theRobot.boomIMU->getYaw();
+		curr_data.pitch = theRobot.boomIMU->getPitch();
+		curr_data.roll = theRobot.boomIMU->getRoll();
+		curr_data.head = theRobot.boomIMU->getHeading();
+		curr_data.temp = theRobot.boomIMU->getTemp();
+
+		// write values to file
+		write_imu_data("boomIMU.txt", curr_data);
 
 		// go to sleep for a bit
 		usleep(10000); // 10ms
 	}while ((current_key != 'q') && (current_key!='Q') && (quit_gl !=TRUE));
 
 	delete theRobot.boomIMU;
-
 	pthread_exit(0);
 }
 

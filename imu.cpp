@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 using namespace std;
 

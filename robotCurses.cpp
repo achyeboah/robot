@@ -1,5 +1,6 @@
 #include "robotCurses.h"
 #include "defs.h"
+#include "utils.h"
 
 #include <stdlib.h>
 #include <ncurses.h>
@@ -9,7 +10,6 @@ namespace samsRobot{
 	robotCurses::robotCurses(){
 		// doesn't do much
 		validWins = FALSE;
-		motor_status = 0;
 		if(init_screen() == 0){
 			this->validWins = TRUE;
 	    		clear();
@@ -159,14 +159,14 @@ namespace samsRobot{
 
 			// update the status window
 			getmaxyx(w_status,y,x);
-			mvwprintw(w_status, 0, (x - 12)/2, "Status");
-			// mvwprintw(w_status, 1, 1, "T%02.1fC, P%02.1f, Y%02.1f, R%02.1f", 
-			// temp, curr_pitch, curr_yaw, curr_roll);
-			if (motor_status == 0)
-				mvwprintw(w_status, 2, 1, "Status: STOPPED ");
-			else
-				mvwprintw(w_status, 2, 1, "Status: MOVEMENT ");
-			mvwprintw(w_status, 3,1, "openGL FPS = %02.2f", ogl_fps);
+			mvwprintw(w_status, y-y, (x - 12)/2, "Status");
+			mvwprintw(w_status, 1,1, "openGL FPS = %02.2f", ogl_fps);
+
+			static imu_data boomdata;
+			read_imu_data("boomIMU.txt", boomdata);
+
+			mvwprintw(w_status, 2, 1, "T%02.1fC, P%02.1f, Y%02.1f, R%02.1f",
+					boomdata.temp, boomdata.pitch, boomdata.yaw, boomdata.roll);
 
 			// draw all windows
 			wrefresh(w_lcontrol);
@@ -203,9 +203,8 @@ namespace samsRobot{
 
 	}
 
-	int robotCurses::update(int motor_status){
+	int robotCurses::update(void){
 		// let us know whats happening in the outside world
-		this->motor_status = motor_status;
 
 		int keys = getch();
 
@@ -218,8 +217,8 @@ namespace samsRobot{
 			usleep(2000000);
 		}
 
-		usleep(50000); // rest for 50ms 
-		this->draw_board(); // remove the highlight
+		usleep(100000); // rest for 50ms 
+		this->draw_board(0); // remove the highlight
 
 		return keys;
 	}
