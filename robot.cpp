@@ -32,7 +32,6 @@ float robotGL_fps = 0.0f;
 // current motor_status, info returned from drive_motors() and update_robot_status();
 int motor_status = 0;
 
-// create just one segment to start with
 // global because accessed by multiple threads
 robotSeg ground, up_axis;
 
