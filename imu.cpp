@@ -85,7 +85,7 @@ namespace samsRobot {
 			numRegs = MPU9250_DEV_NUM_REG;
 		}
 		if(this->readRegister(address) != this->i2caddress){
-			fprintf(stderr, "MPU9250: Failure to read from correct device\n");
+			fprintf(stderr, "IMU: Failure to read from correct device\n");
 			return -1;
 		}
 		// read in accessible registers
