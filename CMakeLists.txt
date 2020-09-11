@@ -11,6 +11,10 @@ project(samsRobot
 
 configure_file(config.h.in config.h)
 
+find_package(GLU REQUIRED)
+find_package(GLEW REQUIRED)
+find_package(glfw3 REQUIRED)
+
 add_executable(robot 
 
 	robot.cpp 
@@ -30,7 +34,7 @@ target_include_directories(robot PUBLIC
 	"${PROJECT_BINARY_DIR}"
       	)
 
-target_link_libraries(robot PUBLIC ncurses GLU GL GLEW glfw3 dl pthread)
+target_link_libraries(robot PUBLIC ncurses dl glfw3 GL pthread GLEW)
 
 get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
 foreach(dir ${dirs})
