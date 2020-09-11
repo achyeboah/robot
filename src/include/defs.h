@@ -2,6 +2,8 @@
 #define DEFS_H_
 
 namespace samsRobot{
+	// imu socket service port
+	#define IMU_SERVICE_PORT 12321
 
 	// terminal size requirements
 	#define MIN_TERM_WIDTH 60

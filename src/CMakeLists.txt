@@ -26,25 +26,30 @@ find_package(GLEW REQUIRED)
 find_package(glfw3 REQUIRED)
 
 add_executable(robot 
-
 	robot.cpp 
 	robotSeg.cpp
-
 	i2cdev.cpp 
 	imu.cpp 
 	utils.cpp
-
 	robotGL.cpp
 	robotCurses.cpp
-
+	SocketClient.cpp
 	)
-
-
 target_include_directories(robot PUBLIC 
 	"${PROJECT_SOURCE_DIR}/include" 
 	"/home/sam/src/glm/"
 	"${PROJECT_BINARY_DIR}"
       	)
-
 target_link_libraries(robot PUBLIC ncurses dl glfw3 GL pthread GLEW)
 
+add_executable(imu_service
+	imu_service.cpp
+	SocketServer.cpp
+	i2cdev.cpp
+	imu.cpp
+	)
+target_include_directories(imu_service PUBLIC 
+	"${PROJECT_SOURCE_DIR}/include" 
+	"${PROJECT_BINARY_DIR}"
+      	)
+target_link_libraries(imu_service)

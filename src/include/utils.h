@@ -7,7 +7,8 @@ namespace samsRobot{
 		unsigned int type;
 		float pitch, yaw, roll;
 		float wVelX, wVelY, wVelZ;
-		float head, temp;
+		float headX, headY, headZ;
+		float temp;
 	};
 
 	unsigned int write_imu_data(const char* filename, const imu_data data);

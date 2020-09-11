@@ -184,7 +184,6 @@ void* update_robot_status(void*){
 		curr_data.yaw = theRobot.boomIMU->getYaw();
 		curr_data.pitch = theRobot.boomIMU->getPitch();
 		curr_data.roll = theRobot.boomIMU->getRoll();
-		curr_data.head = theRobot.boomIMU->getHeading();
 		curr_data.temp = theRobot.boomIMU->getTemp();
 
 		// write values to file
