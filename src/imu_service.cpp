@@ -22,7 +22,7 @@ using namespace samsRobot;
 			fprintf(stderr, "Rerun as follows, for example: %s %d\n", argv[0], 12345);
 			fprintf(stderr, "Will use default port of %d\n", IMU_SERVICE_PORT);
 		}else{
-			port = (unsigned int)(*argv[1]);
+			port = atoi(argv[1]);
 		}
 
 		// create log file
