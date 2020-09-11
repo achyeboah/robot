@@ -8,7 +8,7 @@ Uses MPU6050 and MPU9250 (with AK8963) gyroscope/accelerometer/magnetometer as I
 * [General info](#general-info)
 * [Technologies](#technologies)
 * [Setup](#setup)
-* Todo (#todo)
+* [Todo](#todo)
 
 ## General info
 This project is a simple robot automatic control and visualisation program for a simple off-shelf 4DoF arm manipulator. 
