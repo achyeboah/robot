@@ -1,5 +1,6 @@
 #include "robotCurses.h"
 #include "defs.h"
+#include "config.h"
 #include "utils.h"
 
 #include <stdlib.h>

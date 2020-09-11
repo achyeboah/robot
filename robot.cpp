@@ -1,4 +1,5 @@
 #include "defs.h"
+#include "config.h"
 #include "imu.h"
 #include "utils.h"
 #include "robotCurses.h"
@@ -288,7 +289,7 @@ void print_usage(int argc, char** argv){
 			samsRobot_VERSION_MAJOR,
 			samsRobot_VERSION_MINOR,
 			samsRobot_VERSION_PATCH );
-	printf("Please note that program %s is as follows. \n", argv[0]);
+	printf("Please note that program %s usage is as follows. \n", argv[0]);
 	printf("\t-c\tUse NCurses window\n");
 	printf("\t-g\tUse openGL window\n");
 	printf("\t-f\tUse full screen (calls -g)\n");

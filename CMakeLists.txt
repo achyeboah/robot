@@ -11,7 +11,10 @@ project(samsRobot
 
 configure_file(config.h.in config.h)
 
-find_package(GLU REQUIRED)
+# use new policy (GLVND) for openGL
+cmake_policy(SET CMP0072 NEW)
+
+find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 find_package(glfw3 REQUIRED)
 
@@ -36,7 +39,3 @@ target_include_directories(robot PUBLIC
 
 target_link_libraries(robot PUBLIC ncurses dl glfw3 GL pthread GLEW)
 
-get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
-foreach(dir ${dirs})
-	message(STATUS "dir found = '${dir}'")
-endforeach()
