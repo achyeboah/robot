@@ -1,18 +1,25 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.00)
 # set(CMAKE_CXX_STANDARD 14)
 # set(CMAKE_CXX_STANDARD_REQUIRED true)
 
 # project name and version
-project(samsRobot
+project(robot
        	VERSION 2020.09.11
-	DESCRIPTION "Simple program to manipulate a 4DoF robot"
+	#DESCRIPTION "Simple program to manipulate a 4DoF robot"
 	LANGUAGES CXX
 	)
 
 configure_file(config.h.in config.h)
 
-# use new policy (GLVND) for openGL
-cmake_policy(SET CMP0072 NEW)
+if(${CMAKE_VERSION} VERSION_LESS "3.8.0") 
+	message(WARNING "Old version of CMAKE detected - not using CMP0072 for openGL")
+else()
+	message (NOTICE " CMAKE version " ${CMAKE_VERSION} " detected. Using CMP0072 for openGL")
+	project(samsRobot DESCRIPTION "Simple program to manipulate a 4DoF robot")
+
+	# use new policy (GLVND) for openGL (required from CMAKE 3.11 upwards)
+	cmake_policy(SET CMP0072 NEW)
+endif()
 
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
@@ -29,7 +36,9 @@ add_executable(robot
 
 	robotGL.cpp
 	robotCurses.cpp
+
 	)
+
 
 target_include_directories(robot PUBLIC 
 	"${PROJECT_SOURCE_DIR}/include" 
