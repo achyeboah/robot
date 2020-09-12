@@ -17,7 +17,7 @@ Uses MPU6050 and MPU9250 (with AK8963) gyroscope/accelerometer/magnetometer as I
 	
 ## Technologies
 Project is created with:
-* Some code from Derek Molloy's exploring Raspberry Pi (GPIO.h/GPIO.cpp)
+* Some code from Derek Molloy's exploring Raspberry Pi
 * GLFW3
 * GLEW
 
