@@ -24,6 +24,8 @@ namespace exploringRPi {
 			virtual ~SocketServer();
 
 			virtual void getClient(char* client_ip, unsigned int& port) const;
+			virtual bool getConnected(void) const;
+			virtual void disconnect(void);
 	};
 
 } /* namespace exploringRPi */
