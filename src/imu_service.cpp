@@ -28,7 +28,7 @@ using namespace samsRobot;
 		// create log file
 		FILE* fpointer;
 		char log_filename[] = "imu_service_log.txt";
-		fpointer = fopen(log_filename, "w+");
+		fpointer = fopen(log_filename, "w");
 		if (fpointer == NULL){
 			perror("imu_service: could not open log");
 			return -1;
@@ -41,9 +41,12 @@ using namespace samsRobot;
 		// start the server
 		SocketServer server(port);
 		server.listen();
-
-		std::string client_req;
 		do{
+			if(server.getConnected() == false){
+				server.listen();
+			}
+
+			std::string client_req;
 			client_req = server.receive(100);
 
 			// gather the information we require
@@ -57,6 +60,7 @@ using namespace samsRobot;
 			fprintf(fpointer, "Response: %s\n", server_respc );
 
 		}while(1);// client_req.compare("quit" != 0));
+
 
 		fclose(fpointer);
 
@@ -72,7 +76,7 @@ using namespace samsRobot;
 
 		char temp[200];
 
-		sprintf(temp, "%d: %f %f %f; %f\n", 
+		sprintf(temp, "%d: %f %f %f; %f", 
 				boomIMU->getIMUtype(),
 				boomIMU->getPitch(), boomIMU->getYaw(),	boomIMU->getRoll(),
 				boomIMU->getTemp()
