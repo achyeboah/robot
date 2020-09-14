@@ -76,8 +76,8 @@ using namespace samsRobot;
 
 		char temp[200];
 
-		sprintf(temp, "%d: %f %f %f; %f", 
-				boomIMU->getIMUtype(),
+		sprintf(temp, "%d %f %f %f %f", 
+				boomIMU->getIMUtype() == 0 ? 6050 : 9250,
 				boomIMU->getPitch(), boomIMU->getYaw(),	boomIMU->getRoll(),
 				boomIMU->getTemp()
 		       );
