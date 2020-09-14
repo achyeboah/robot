@@ -5,6 +5,8 @@
 #include "robotCurses.h"
 #include "robotGL.h"
 #include "robotSeg.h"
+// add the socketclient to read from rPi
+#include "SocketClient.h"
 
 #include <iostream>
 #include <math.h>
@@ -12,6 +14,8 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <time.h> // for rand()
+#include <string>
+#include <cstring>
 
 using namespace samsRobot;
 
@@ -45,7 +49,7 @@ struct myRobot{
 	robotSeg dipper;
 	robotSeg bucket;
 	// robot IMUs go here
-	imu* boomIMU;
+	imu_data boom_data;
 } theRobot;
 
 int main(int argc, char **argv)
@@ -173,27 +177,50 @@ void* drive_motors(void*){
 
 
 void* update_robot_status(void*){
-	imu_data curr_data;
+	char serv[] = "192.168.10.46";
+	exploringRPi::SocketClient sc(serv, 12321);
+	sc.connectToServer();
 
-	// need a better way to track data from all the IMUs and fuse them
-	theRobot.boomIMU = new imu(1, 0x68, imu::MPU6050); 
+	std::string delim = " ";
+	float pitch = 0.0f;
+	float yaw = 0.0f;
+	float roll = 0.0f;
+	float temp = 0.0f;
 
 	do{
-		theRobot.boomIMU->readSensorState();
+		pitch = 0.0f;
+		yaw = 0.0f;
+		roll = 0.0f;
+		temp = 0.0f;
 
-		curr_data.yaw = theRobot.boomIMU->getYaw();
-		curr_data.pitch = theRobot.boomIMU->getPitch();
-		curr_data.roll = theRobot.boomIMU->getRoll();
-		curr_data.temp = theRobot.boomIMU->getTemp();
+		if(sc.isClientConnected() != true){
+			fprintf(stderr, "Please make sure the imu service is running on the remote server\n");
+			usleep(1000000);
+			sc.connectToServer();
+		}
 
-		// write values to file
-		write_imu_data("boomIMU.txt", curr_data);
+		// send a message to read from imu on address 0x68
+		std::string cmsg("0x68");
+		sc.send(cmsg);
+
+		std::string smsg = sc.receive(100);
+		std::string delim = " ";
+		size_t pos; 
+		// received stream is space delimited as type, then in groups of three, then temp
+		// now [type pitch yaw roll temp]
+		if(smsg.length() > 1){
+			// we've got some data
+			pos = smsg.find(delim);	theRobot.boom_data.type = ::atoi(smsg.substr(0, pos).c_str()); smsg.erase(0,pos+1);
+			pos = smsg.find(delim);	theRobot.boom_data.pitch = ::atof(smsg.substr(0, pos).c_str()); smsg.erase(0,pos+1);
+			pos = smsg.find(delim);	theRobot.boom_data.roll = ::atof(smsg.substr(0, pos).c_str()); smsg.erase(0,pos+1);
+			pos = smsg.find(delim);	theRobot.boom_data.yaw = ::atof(smsg.substr(0, pos).c_str()); smsg.erase(0,pos+1);
+			pos = smsg.find(delim);	theRobot.boom_data.temp = ::atof(smsg.substr(0, pos).c_str()); smsg.erase(0,pos+1);
+		}
 
 		// go to sleep for a bit
-		usleep(10000); // 10ms
+		usleep(100000); // 10ms
 	}while ((current_key != 'q') && (current_key!='Q') && (quit_gl !=TRUE));
 
-	delete theRobot.boomIMU;
 	pthread_exit(0);
 }
 
@@ -244,31 +271,10 @@ void* draw_graphics(void*){
 	glWin.create_cuboid(up_axis);
 	glWin.create_cuboid(ground);
 
-	// seg1 does not move
-	float seg1_pitch=0.0f;
-	float seg2_pitch=0.0f;
-	float seg3_pitch=0.0f;
-	float seg4_pitch=0.0f;
-
-	float elapsedTime0 = 0.0f;
-	float elapsedTime1 = 0.0f;
-	float elapsedTime2 = 0.0f;
-	float elapsedTime3 = 0.0f;
-
+	// remember seg1 does not move
 	do{
-		elapsedTime0 += 0.02;
-		elapsedTime1 += 0.01;
-		elapsedTime2 += 0.01;
-		elapsedTime3 += 0.01;
-
-		seg1_pitch = (57.0f*cos(elapsedTime0));
-		seg2_pitch = 20+abs(57.0f*cos(elapsedTime1));
-		seg3_pitch = -1 * abs(57.0f*sin(elapsedTime2)); 
-		seg4_pitch = -1* 57.0f*cos(elapsedTime3);
-		glWin.set_segAngles(theRobot.base.getID(), 0, 0, seg1_pitch); // needs some work
-		glWin.set_segAngles(theRobot.boom.getID(), 0, seg2_pitch, 0);
-		glWin.set_segAngles(theRobot.dipper.getID(), 0, seg3_pitch, 0);
-		glWin.set_segAngles(theRobot.bucket.getID(), 0, seg4_pitch, 0);
+		glWin.set_segAngles(theRobot.base.getID(), theRobot.boom_data.roll, 0, 0); // needs some work
+		glWin.set_segAngles(theRobot.boom.getID(), theRobot.boom_data.pitch, theRobot.boom_data.yaw, theRobot.boom_data.roll); // needs some work
 
 	 	glWin.updateScreen();
 		robotGL_fps = glWin.get_fps();
