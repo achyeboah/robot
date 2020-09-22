@@ -45,7 +45,7 @@ using namespace samsRobot;
 		unsigned int i2caddress = 0;
 		int pinAD0 = 0;
 		unsigned int itype;
-		imu::IMU_TYPE ttype = imu::MPU6050;
+		imu::IMU_TYPE ttype;
 		std::string delim = " ";
 
 		do{

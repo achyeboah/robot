@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.0)
 
 # project name and version
 project(samsRobot
-       	VERSION 2020.09.11
+       	VERSION 2020.09.23
 	LANGUAGES CXX
 	)
 
