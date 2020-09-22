@@ -34,6 +34,7 @@ add_executable(robot
 	robotGL.cpp
 	robotCurses.cpp
 	SocketClient.cpp
+	GPIO.cpp
 	)
 target_include_directories(robot PUBLIC 
 	"${PROJECT_SOURCE_DIR}/include" 

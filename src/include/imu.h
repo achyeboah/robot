@@ -2,31 +2,36 @@
 #define IMU_H_
 
 #include "i2cdev.h"
+#include "GPIO.h"
+
+using namespace exploringRPi;
 
 namespace samsRobot{
 
 	/* From register map (RM-MPU-9250 rev 1.6, Sep 2013)
 	 * of the TDK MPU9250 device (Rev 1.6) */
-#define MPU9250_ADDR_WHO_AM_I 0x75 // address on device for reading device address
-#define MPU9250_DEV_NUM_REG 0x7E // total number of available registers (126d). not all can be accessed.
+#define MPU9250_ADDR_WHO_AM_I 0x75 /* address on device for reading device address */
+#define MPU9250_DEV_NUM_REG 0x7E /* total number of available registers (126d). not all can be accessed. */
+#define MPU9250_WHO_AM_I 0x69 /* value of who_am_i register */
 	/* From register map (RM-MPU-6000A-00 rev 4.2, Aug 2013)
 	 * of the TDK MPU60X0 device (Rev C) */
-#define MPU6050_ADDR_WHO_AM_I 0x75 // address to read device address
-#define MPU6050_DEV_NUM_REG 0x75 // total number of available registers. not all can be accessed.
+#define MPU6050_ADDR_WHO_AM_I 0x75 /* address to read device address
+#define MPU6050_DEV_NUM_REG 0x75 /* total number of available registers. not all can be accessed.*/
+#define MPU6050_WHO_AM_I 0x69 /* value of who_am_i register. we'll always use AD0 to address */
 	/* From register map (RM-MPU-9250 rev 1.6, Sep 2013)
 	 * of the TDK MPU9250 device (Rev 1.6) */
-#define AK8963_ADDR_WHO_AM_I 0x00 // address on device for reading device address
-#define AK8963_DEV_NUM_REG 0x0F // total number of available registers (18d). not all can be accessed.
+#define AK8963_ADDR_WHO_AM_I 0x00 /* address on device for reading device address */
+#define AK8963_DEV_NUM_REG 0x0F /* total number of available registers (18d). not all can be accessed.*/
+#define AK8963_WHO_AM_I 0x48 /* value of who_am_i register. */
+#define AK8963_ADDR_CONFIG	0x0A	/* device filter configuration */
 
-#define AK8963_ADDR_CONFIG	0x0A	// device filter configuration
+	/* shared address for configuration */
+#define CONFIG_DLPF_CFG 0x02	/* see device register map. corresponds to approx 100hz */
+#define PWR_MGMT_1_CLK_SRC 0x01	/* see device register map. corresponds to x gyro*/
 
-	// shared address for configuration
-#define CONFIG_DLPF_CFG 0x02	// see device register map. corresponds to approx 100hz
-#define PWR_MGMT_1_CLK_SRC 0x01	// see device register map. corresponds to x gyro
-
-#define ADDR_SMPLRT_DIV	0x19	// sample rate divider
-#define ADDR_CONFIG	0x1A	// device filter configuration
-#define ADDR_GYRO_CONFIG 0x1B // gyroscope configuration
+#define ADDR_SMPLRT_DIV	0x19	/* sample rate divider */
+#define ADDR_CONFIG	0x1A	/* device filter configuration */
+#define ADDR_GYRO_CONFIG 0x1B /* gyroscope configuration */
 #define ADDR_ACCEL_CONFIG 0x1C // accelerometer configuration
 #define ADDR_ACCEL_CONFIG2 0x1D // second configuration register (MPU9250 only)
 #define ADDR_INT_PIN_CFG	0x37	// interrupt pin configuration
@@ -66,7 +71,8 @@ namespace samsRobot{
 		public:
 			enum IMU_TYPE {
 				MPU6050 = 0, 
-				MPU9250 = 1
+				MPU9250 = 1,
+				AK8963 = 2
 			};
 			// define the accelorometer full scale range
 			// [Reg ACCEL_CONFIG (0x1C: bits 4-3): AFS-SEL]
@@ -94,6 +100,7 @@ namespace samsRobot{
 			imu::ACCEL_RANGE accel_range;
 			imu::GYRO_RANGE gyro_range;
 			imu::IMU_TYPE sensor_type;
+			GPIO* pinAD0; /* pin for enabling this IMU */
 
 			short accelX, accelY, accelZ; // raw 2's complement
 			float pitch, roll, yaw; // in degrees
@@ -116,9 +123,9 @@ namespace samsRobot{
 			virtual int updateRegisters();
 
 		public:
-			imu(unsigned int i2cbus, unsigned int i2caddress=0x68, imu::IMU_TYPE type = imu::MPU6050);
+			imu(unsigned int i2cbus, int pinADO, unsigned int i2caddress=0x68, imu::IMU_TYPE type = imu::MPU6050);
 
-			virtual int readSensorState();
+			virtual int readSensorState(void);
 
 			virtual void setAccelRange(imu::ACCEL_RANGE range);
 			virtual imu::ACCEL_RANGE getAccelRange(void) const;

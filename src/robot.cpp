@@ -5,6 +5,7 @@
 #include "robotCurses.h"
 #include "robotGL.h"
 #include "robotSeg.h"
+
 // add the socketclient to read from rPi
 #include "SocketClient.h"
 
@@ -20,6 +21,7 @@
 using namespace samsRobot;
 
 void print_usage(int argc, char **argv);
+void str_to_imu_data(std::string smsg, std::string delim, imu_data& data);
 
 // other handlers
 void* update_robot_status(void*);
@@ -45,6 +47,7 @@ struct myRobot{
 	robotSeg bucket;
 	// robot IMUs go here
 	imu_data boom_data;
+	imu_data dipper_data;
 } theRobot;
 
 int main(int argc, char **argv)
@@ -134,6 +137,12 @@ void* draw_curses(void*){
 		if (quit_gl != TRUE){
 
 			myscreen.set_ogl_fps(robotGL_fps);
+			char imu_stats[100];
+			sprintf(imu_stats, "Boom: P%f Y%f R%f;\nP%f Y%f R%f", 
+					theRobot.boom_data.pitch, theRobot.boom_data.yaw, theRobot.boom_data.roll,
+					theRobot.dipper_data.pitch, theRobot.dipper_data.yaw, theRobot.dipper_data);
+			myscreen.set_imu(&theRobot.boom_data, 1);
+
 			keys = myscreen.update(); 
 
 			// make the current key available to other threads
@@ -174,30 +183,43 @@ void* update_robot_status(void*){
 			usleep(1000000);
 			sc.connectToServer();
 		}
+		/* request from client is of the form 
+		* [i2caddress type pinGPIO] */
 
-		// send a message to read from imu on address 0x68
-		std::string cmsg("0x68");
+		// send a message to read from imu on 6050
+		std::string cmsg("68 6050"); cmsg += (IMU_1_GPIO); cmsg += " ";
 		sc.send(cmsg);
+		std::string smsg = sc.receive(300);
+		std::cout << "Sent " << cmsg << ", received "<< smsg << std::endl;
+		str_to_imu_data(smsg, delim, theRobot.boom_data);
 
-		std::string smsg = sc.receive(100);
-		std::string delim = " ";
-		size_t pos; 
-		// received stream is space delimited as type, then in groups of three, then temp
-		// now [type pitch yaw roll temp]
-		if(smsg.length() > 1){
-			// we've got some data
-			pos = smsg.find(delim);	theRobot.boom_data.type = ::atoi(smsg.substr(0, pos).c_str()); smsg.erase(0,pos+1);
-			pos = smsg.find(delim);	theRobot.boom_data.pitch = ::atof(smsg.substr(0, pos).c_str()); smsg.erase(0,pos+1);
-			pos = smsg.find(delim);	theRobot.boom_data.roll = ::atof(smsg.substr(0, pos).c_str()); smsg.erase(0,pos+1);
-			pos = smsg.find(delim);	theRobot.boom_data.yaw = ::atof(smsg.substr(0, pos).c_str()); smsg.erase(0,pos+1);
-			pos = smsg.find(delim);	theRobot.boom_data.temp = ::atof(smsg.substr(0, pos).c_str()); smsg.erase(0,pos+1);
-		}
+		// send a message to read from imu on 9250 
+		cmsg.clear(); cmsg = "68 9250"; cmsg += (IMU_2_GPIO); cmsg += " ";
+		sc.send(cmsg);
+		smsg.clear();
+	        smsg = sc.receive(300);
+		std::cout << "Sent " << cmsg << ", received "<< smsg << std::endl;
+		str_to_imu_data(smsg, delim, theRobot.dipper_data);
 
 		// go to sleep for a bit
-		usleep(100000); // 10ms
+		usleep(50000); // 50ms
 	}while ((current_key != 'q') && (current_key!='Q') && (quit_gl !=TRUE));
 
 	pthread_exit(0);
+}
+
+void str_to_imu_data(std::string smsg, std::string delim, imu_data& data){
+	size_t pos; 
+	// received stream is space delimited as device type, then in groups of three, then temp
+	// now [type pitch yaw roll temp]
+	if(smsg.length() > 1){
+		// we've got some data
+		pos = smsg.find(delim);	data.type = ::atoi(smsg.substr(0, pos).c_str()); smsg.erase(0,pos+1);
+		pos = smsg.find(delim);	data.pitch = ::atof(smsg.substr(0, pos).c_str()); smsg.erase(0,pos+1);
+		pos = smsg.find(delim);	data.roll = ::atof(smsg.substr(0, pos).c_str()); smsg.erase(0,pos+1);
+		pos = smsg.find(delim);	data.yaw = ::atof(smsg.substr(0, pos).c_str()); smsg.erase(0,pos+1);
+		pos = smsg.find(delim);	data.temp = ::atof(smsg.substr(0, pos).c_str()); smsg.erase(0,pos+1);
+	}
 }
 
 

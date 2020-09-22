@@ -1,7 +1,6 @@
 #include "robotCurses.h"
 #include "defs.h"
 #include "config.h"
-#include "utils.h"
 
 #include <stdlib.h>
 #include <ncurses.h>
@@ -163,17 +162,25 @@ namespace samsRobot{
 			mvwprintw(w_status, y-y, (x - 12)/2, "Status");
 			mvwprintw(w_status, 1,1, "openGL FPS = %02.2f", ogl_fps);
 
-			static imu_data boomdata;
-			read_imu_data("boomIMU.txt", boomdata);
-
-			mvwprintw(w_status, 2, 1, "T%02.1fC, P%02.1f, Y%02.1f, R%02.1f",
-					boomdata.temp, boomdata.pitch, boomdata.yaw, boomdata.roll);
+			for (int i = 0; i < (this->ilen); i++){
+				mvwprintw(w_status, 2, 1, "T%02.1fC, P%02.1f, Y%02.1f, R%02.1f",
+					idata[i].temp, idata[i].pitch, idata[i].yaw, idata[i].roll);
+			}
 
 			// draw all windows
 			wrefresh(w_lcontrol);
 			wrefresh(w_rcontrol);
 			wrefresh(w_input);
 			wrefresh(w_status);
+		}
+	}
+
+	void robotCurses::set_imu(const imu_data* data, const unsigned int len){
+		unsigned int index = 0;
+		/* no error checking, presuming len is valid */
+		ilen = len;
+		for(index = 0; index < len; index++){
+			idata[index] = data[index];
 		}
 	}
 

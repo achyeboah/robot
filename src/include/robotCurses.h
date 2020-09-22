@@ -2,6 +2,7 @@
 #define ROBOTWIN_H
 
 #include <ncurses.h>
+#include "utils.h"
 
 namespace samsRobot{
 
@@ -16,6 +17,9 @@ namespace samsRobot{
 
 			bool validWins;
 			float ogl_fps = 3.1f;
+			imu_data idata[10];
+			unsigned int ilen;
+
 		public:
 			robotCurses();
 			~robotCurses();
@@ -29,6 +33,7 @@ namespace samsRobot{
 			int init_screen(void);
 			bool getValidWins(void) const;
 			void set_ogl_fps(const float fps);
+			void set_imu(const imu_data* data, const unsigned int len);
 	};
 }
 

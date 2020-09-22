@@ -5,9 +5,14 @@ namespace samsRobot{
 	// imu socket service port
 	#define IMU_SERVICE_PORT 12321
 
+	/* define gpio pins used to enable imus (ad0). Note these are currently shared with motors */
+	#define IMU_1_GPIO 17
+	#define IMU_2_GPIO 27
+	#define IMU_3_GPIO 22
+
 	// terminal size requirements
-	#define MIN_TERM_WIDTH 60
-	#define MIN_TERM_HEIGHT 20
+	#define MIN_TERM_WIDTH 80
+	#define MIN_TERM_HEIGHT 24
 	
 	// threshold for detecting movement
 	#define YAW_THRESH 3

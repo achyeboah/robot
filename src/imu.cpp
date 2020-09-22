@@ -8,105 +8,136 @@
 #include <stdlib.h>
 
 using namespace std;
+using namespace exploringRPi;
 
 namespace samsRobot {
 
-	/* constructor: initialise the device
-	 * param i2cbus: the bus number, default is 1
-	 * param i2caddress: the device address
-	 */
-	imu::imu(unsigned i2cbus, unsigned int i2caddress, imu::IMU_TYPE type):
+	/* constructor: initialise the device */
+	imu::imu(unsigned i2cbus, int pinAD0, unsigned int i2caddress, imu::IMU_TYPE type):
 		i2cdev(i2cbus, i2caddress){
 		this->i2caddress = i2caddress;
-		// enable the lpf.
-		// This makes both accel and gyro rate 1khz.
-		this->enable_dlpf = true;
 
-		// init our members
-		this->accelX = 0;
-		this->accelY = 0;
-		this->accelZ = 0;
-		this->pitch = 0.0f;
-		this->roll = 0.0f;
-		this->yaw = 0.0f;
-
-		this->tempRaw = 0;
-		this->temp = 0.0f;
-		
-		this->magX = 0;
-		this->magY = 0;
-		this->magZ = 0;
-		this->fmagX = 0.0f;
-		this->fmagY = 0.0f;
-		this->fmagZ = 0.0f;
-
-		this->registers = NULL;
-
-		this->accel_range = imu::PLUSMINUS_2_G;
-		this->gyro_range = imu::PLUSMINUS_500;
 		this->sensor_type = type;
 
-		// initialize the device
+		if((type == imu::MPU6050) || (type == imu::MPU9250)){
+			/* the magnetometer does not do these bits
+			 * enable the lpf.
+			 * This makes both accel and gyro rate 1khz.
+			 */
+			this->enable_dlpf = true;
+
+			// init our members
+			this->accelX = 0;
+			this->accelY = 0;
+			this->accelZ = 0;
+			this->pitch = 0.0f;
+			this->roll = 0.0f;
+			this->yaw = 0.0f;
+
+			this->tempRaw = 0;
+			this->temp = 0.0f;
+
+			this->magX = 0;
+			this->magY = 0;
+			this->magZ = 0;
+			this->fmagX = 0.0f;
+			this->fmagY = 0.0f;
+			this->fmagZ = 0.0f;
+
+			this->registers = NULL;
+
+			this->accel_range = imu::PLUSMINUS_2_G;
+			this->gyro_range = imu::PLUSMINUS_500;
+
+			// initialize the device - this has to happen before any device writes.
+			this->pinAD0 = new GPIO(pinAD0);
+			this->pinAD0->setDirection(OUTPUT);
+			this->pinAD0->setValue(LOW);
+		}
+	
 		this->init();
 		this->updateRegisters();
 	}
 
 	/* initialise the device*/
 	void imu::init(){
-		if (this->enable_dlpf == true){
-			// low pass filtered to approx 94hz bandwidth (close enough to 100hz)
-			// this also makes sampling freq for temperature and gyro 1khz
-			this->writeRegister(ADDR_CONFIG, CONFIG_DLPF_CFG);
+		
+		/* address this IMU */
+		if(this->i2caddress == 0x69){
+			this->pinAD0->setValue(HIGH);
+
+			if (this->enable_dlpf == true){
+				// low pass filtered to approx 94hz bandwidth (close enough to 100hz)
+				// this also makes sampling freq for temperature and gyro 1khz
+				this->writeRegister(ADDR_CONFIG, CONFIG_DLPF_CFG);
+			}
+			// set accel dlpf
+			if (this->sensor_type == imu::MPU9250)
+				this->writeRegister(ADDR_ACCEL_CONFIG2, (unsigned char)2);
+			// use a gyro as clock ref instead of internal oscillator
+			this->writeRegister(ADDR_PWR_MGMT_1, PWR_MGMT_1_CLK_SRC);
+			// set gyro range
+			this->writeRegister(ADDR_GYRO_CONFIG, (unsigned char)gyro_range << 3);
+			// set accel range
+			this->writeRegister(ADDR_ACCEL_CONFIG, (unsigned char)accel_range << 3);
+			// enable interrupts when data is ready
+			this->writeRegister(ADDR_INT_ENABLE, 0x01);
+			// enable passthrough
+			this->writeRegister(ADDR_USER_CNTRL, 0x00);
+			this->writeRegister(ADDR_INT_PIN_CFG, 0x02);
+
+			/* release this imu */
+			this->pinAD0->setValue(LOW);
+		}else{
+			/* nothing to do for AK8963 */
 		}
-		// set accel dlpf
-		if (this->sensor_type == imu::MPU9250)
-			this->writeRegister(ADDR_ACCEL_CONFIG2, (unsigned char)2);
-		// use a gyro as clock ref instead of internal oscillator
-		this->writeRegister(ADDR_PWR_MGMT_1, PWR_MGMT_1_CLK_SRC);
-		// set gyro range
-		this->writeRegister(ADDR_GYRO_CONFIG, (unsigned char)gyro_range << 3);
-		// set accel range
-		this->writeRegister(ADDR_ACCEL_CONFIG, (unsigned char)accel_range << 3);
-		// enable interrupts when data is ready
-		this->writeRegister(ADDR_INT_ENABLE, 0x01);
+
 	}
 
 	/* read the sensor values. checks device can be correctly read,
 	 * then read in up to date values, process and update class members */
-	int imu::readSensorState(){
+	int imu::readSensorState(void){
 		unsigned int address = 0;
 		unsigned int numRegs = 0;
 
-		if (this->sensor_type == imu::MPU6050){
-			address = MPU6050_ADDR_WHO_AM_I;
-			numRegs = MPU6050_DEV_NUM_REG;
-		}else{
-			address = MPU9250_ADDR_WHO_AM_I;
-			numRegs = MPU9250_DEV_NUM_REG;
+		/* address this IMU */
+		if(this->i2caddress == 0x69)
+			this->pinAD0->setValue(HIGH);
+
+		if((this->sensor_type == imu::MPU6050) || (this->sensor_type == imu::MPU9250)){
+			if (this->sensor_type == imu::MPU6050){
+				address = MPU6050_ADDR_WHO_AM_I;
+				numRegs = 0x75;//MPU6050_DEV_NUM_REG;
+			}else{
+				address = MPU9250_ADDR_WHO_AM_I;
+				numRegs = MPU9250_DEV_NUM_REG;
+			}
+			if(this->readRegister(address) != this->i2caddress){
+				fprintf(stderr, "IMU: Failure to read from correct device\n");
+				return -1;
+			}
+			// read in accessible registers
+
+			this->registers = this->readRegisters(numRegs, 0x0);
+
+			this->accelX = this->combineRegisters(*(registers+ADDR_ACCEL_DATA_X_H), *(registers+ADDR_ACCEL_DATA_X_L));
+			this->accelY = this->combineRegisters(*(registers+ADDR_ACCEL_DATA_Y_H), *(registers+ADDR_ACCEL_DATA_Y_L));
+			this->accelZ = this->combineRegisters(*(registers+ADDR_ACCEL_DATA_Z_H), *(registers+ADDR_ACCEL_DATA_Z_L));
+
+			this->gyroX = this->combineRegisters(*(registers+ADDR_GYRO_DATA_X_H), *(registers+ADDR_GYRO_DATA_X_L));
+			this->gyroY = this->combineRegisters(*(registers+ADDR_GYRO_DATA_Y_H), *(registers+ADDR_GYRO_DATA_Y_L));
+			this->gyroZ = this->combineRegisters(*(registers+ADDR_GYRO_DATA_Z_H), *(registers+ADDR_GYRO_DATA_Z_L));
+
+			this->tempRaw = this->combineRegisters(*(registers+ADDR_TEMP_DATA_H), *(registers+ADDR_TEMP_DATA_L));
+
+			// read in the sensors actual current range
+			this->accel_range = (imu::ACCEL_RANGE) ((*(registers + ADDR_ACCEL_CONFIG))&0x18);
+			this->gyro_range = (imu::GYRO_RANGE) ((*(registers + ADDR_GYRO_CONFIG))&0x18);
+
+			/* release this imu */
+			this->pinAD0->setValue(LOW);
 		}
-		if(this->readRegister(address) != this->i2caddress){
-			fprintf(stderr, "IMU: Failure to read from correct device\n");
-			return -1;
-		}
-		// read in accessible registers
-
-		this->registers = this->readRegisters(numRegs, 0x0);
-
-		this->accelX = this->combineRegisters(*(registers+ADDR_ACCEL_DATA_X_H), *(registers+ADDR_ACCEL_DATA_X_L));
-		this->accelY = this->combineRegisters(*(registers+ADDR_ACCEL_DATA_Y_H), *(registers+ADDR_ACCEL_DATA_Y_L));
-		this->accelZ = this->combineRegisters(*(registers+ADDR_ACCEL_DATA_Z_H), *(registers+ADDR_ACCEL_DATA_Z_L));
-
-		this->gyroX = this->combineRegisters(*(registers+ADDR_GYRO_DATA_X_H), *(registers+ADDR_GYRO_DATA_X_L));
-		this->gyroY = this->combineRegisters(*(registers+ADDR_GYRO_DATA_Y_H), *(registers+ADDR_GYRO_DATA_Y_L));
-		this->gyroZ = this->combineRegisters(*(registers+ADDR_GYRO_DATA_Z_H), *(registers+ADDR_GYRO_DATA_Z_L));
-
-		this->tempRaw = this->combineRegisters(*(registers+ADDR_TEMP_DATA_H), *(registers+ADDR_TEMP_DATA_L));
-	
-		// read in the sensors actual current range
-		this->accel_range = (imu::ACCEL_RANGE) ((*(registers + ADDR_ACCEL_CONFIG))&0x18);
-		this->gyro_range = (imu::GYRO_RANGE) ((*(registers + ADDR_GYRO_CONFIG))&0x18);
-
-		if (this->sensor_type == imu::MPU9250){
+		if (this->sensor_type == imu::AK8963){
 			// read from ak8963
 			if(this->readRegister(AK8963_ADDR_WHO_AM_I) != AK8963_ADDR_WHO_AM_I){
 				fprintf(stderr, "AK8963 not found!\n");
@@ -129,8 +160,7 @@ namespace samsRobot {
 
 	/* set range of accelerometer according to ACCEL_RANGE enum
 	 * param range: one of enum values */
-	void imu::setAccelRange(imu::ACCEL_RANGE range)
-	{
+	void imu::setAccelRange(imu::ACCEL_RANGE range){
 		this->accel_range = range;
 		this->updateRegisters();
 	}
@@ -157,10 +187,8 @@ namespace samsRobot {
 	}
 
 	/* calculate pitch, roll and yaw values.
-	 * Accounts for range/resolution and effect of gravity
-	 */
-	void imu::calcPitchRollYaw()
-	{
+	 * Accounts for range/resolution and effect of gravity */
+	void imu::calcPitchRollYaw(){
 		float factor = 0.0f;
 
 		switch(this->accel_range){
@@ -181,8 +209,7 @@ namespace samsRobot {
 		this->yaw = 180.0f * atan(accZg/sqrt(accXg_sq + accYg_sq))/M_PI;
 	}
 
-	/* calculate the position of the device
-	 */
+	/* calculate the position of the device	 */
 	void imu::calcAngVel(){
 		float factor = 0.0f;
 		switch (this->gyro_range){
@@ -196,8 +223,7 @@ namespace samsRobot {
 		this->wvelZ = (float)gyroZ/factor;
 	}
 
-	/* calculate the temperature using the raw data
-	 */
+	/* calculate the temperature using the raw data */
 	void imu::calcTemp(){
 		this->temp = ((float)(tempRaw)/TEMP_SENS) + (float)TEMP_OFFSET;
 	}
@@ -206,8 +232,12 @@ namespace samsRobot {
 	 * return 0 if successful
 	 */
 	int imu::updateRegisters(){
-		// nothing specific here
+		/* address this IMU */
+		if(this->i2caddress == 0x69)
+			this->pinAD0->setValue(HIGH);
 		this->init();
+		this->pinAD0->setValue(LOW);
+
 		return 0;
 	}
 
@@ -228,7 +258,7 @@ namespace samsRobot {
 	/* calculate the position of the device
 	*/
 	void imu::calcCompass(){
-		if (this->sensor_type == imu::MPU9250){
+		if (this->sensor_type == imu::AK8963){
 			// full scale range is 4912uT/32760
 			float factor = 4912.0f/32760.0f;
 			this->fmagX = (float)magX/factor;
@@ -242,7 +272,8 @@ namespace samsRobot {
 	}
 
 	imu::~imu(){
-		/* nothing to do here*/
+		delete this->pinAD0;
+		this->pinAD0 == NULL;
 	}
 
 	short imu::getAccelX(void) const {return this->accelX;}
