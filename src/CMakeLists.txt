@@ -47,9 +47,10 @@ add_executable(imu_service
 	SocketServer.cpp
 	i2cdev.cpp
 	imu.cpp
+	GPIO.cpp
 	)
 target_include_directories(imu_service PUBLIC 
 	"${PROJECT_SOURCE_DIR}/include" 
 	"${PROJECT_BINARY_DIR}"
       	)
-target_link_libraries(imu_service)
+target_link_libraries(imu_service pthread)

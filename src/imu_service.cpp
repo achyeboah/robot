@@ -12,7 +12,7 @@ using namespace exploringRPi;
 using namespace std;
 using namespace samsRobot;
 
-	void build_message(std::string& );
+	void build_message(std::string& server_resp, int GPIO, unsigned int i2caddress, imu::IMU_TYPE type);
 
 	int main (int argc, char** argv){
 
@@ -41,6 +41,13 @@ using namespace samsRobot;
 		// start the server
 		SocketServer server(port);
 		server.listen();
+
+		unsigned int i2caddress = 0;
+		int pinAD0 = 0;
+		unsigned int itype;
+		imu::IMU_TYPE ttype = imu::MPU6050;
+		std::string delim = " ";
+
 		do{
 			if(server.getConnected() == false){
 				server.listen();
@@ -49,9 +56,33 @@ using namespace samsRobot;
 			std::string client_req;
 			client_req = server.receive(100);
 
+			/* build the imu parameters. 
+			 * delimiter is space
+			 * request from client is of the form 
+			 * [i2caddress type pinGPIO] */
+
+			size_t pos; 
+			if(client_req.length() > 1){
+				// we've got some data
+				pos = client_req.find(delim);	i2caddress = (unsigned int)(::atoi(client_req.substr(0, pos).c_str())); client_req.erase(0,pos+1);
+				pos = client_req.find(delim);	pinAD0 = ::atoi(client_req.substr(0, pos).c_str()); client_req.erase(0,pos+1);
+				pos = client_req.find(delim);	itype = ::atoi(client_req.substr(0, pos).c_str()); client_req.erase(0,pos+1);
+
+				switch(itype){
+					case 6050:
+						ttype = imu::MPU6050; break;
+					case 9250:
+						ttype = imu::MPU9250; break;
+					case 8963:
+						ttype = imu::AK8963; break;
+					default:
+						ttype = imu::MPU6050; break;
+				}
+			}
+
 			// gather the information we require
 			std::string server_resp;
-			build_message(server_resp);
+			build_message(server_resp, pinAD0, i2caddress, ttype);
 			server.send(server_resp);
 
 			// log the transaction
@@ -59,32 +90,36 @@ using namespace samsRobot;
 			strcpy(server_respc, server_resp.c_str());
 			fprintf(fpointer, "Response: %s\n", server_respc );
 
-		}while(1);// client_req.compare("quit" != 0));
+		}while(1); // client_req.compare("quit" != 0));
 
+			fclose(fpointer);
+			return 0;
+		}
 
-		fclose(fpointer);
-
-		return 0;
-	}
-
-	void build_message(std::string& server_resp){
+	void build_message(std::string& server_resp, int GPIO, unsigned int i2caddress, imu::IMU_TYPE type){
 		// gather all available IMUs, get data for each
 
 		// need a better way to track data from all the IMUs and fuse them
-		imu* boomIMU = new imu(1, 0x68, imu::MPU6050); 
-		boomIMU->readSensorState();
+		imu* IMU = new imu(1, GPIO, i2caddress, type); 
+		IMU->readSensorState();
+		unsigned int itype = 4;
 
-		char temp[200];
-
-		sprintf(temp, "%d %f %f %f %f", 
-				boomIMU->getIMUtype() == 0 ? 6050 : 9250,
-				boomIMU->getPitch(), boomIMU->getYaw(),	boomIMU->getRoll(),
-				boomIMU->getTemp()
-		       );
-
+		char temp[100];
 		server_resp.clear();
+		switch(IMU->getIMUtype()){
+			case 0: itype = 6050;  break;
+			case 1: itype = 9250; break;
+			case 2: itype = 8963; break;
+			default: itype = 6050; break;
+		}
+
+		sprintf(temp, "%d %f %f %f %f\n", 
+				itype,
+				IMU->getPitch(), IMU->getYaw(),	IMU->getRoll(),
+				IMU->getTemp()
+		       );
 		server_resp += temp;
 
-		delete boomIMU;
+		delete IMU;
 	}
 
