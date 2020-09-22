@@ -19,13 +19,11 @@
 
 using namespace samsRobot;
 
-void init_motors(void);
 void print_usage(int argc, char **argv);
 
 // other handlers
 void* update_robot_status(void*);
 void* draw_curses(void*);
-void* drive_motors(void*);
 void* draw_graphics(void*);
 
 // current user key, info returned from draw_curses();
@@ -34,9 +32,6 @@ bool quit_gl = FALSE;
 bool do_fullscreen = FALSE;
 int previous_key = 0;
 float robotGL_fps = 0.0f;
-
-// current motor_status, info returned from drive_motors() and update_robot_status();
-int motor_status = 0;
 
 // global because accessed by multiple threads
 robotSeg ground, up_axis;
@@ -96,20 +91,14 @@ int main(int argc, char **argv)
 	if ((do_gl == FALSE) && (do_curses == FALSE))
 		exit(0);
 
-	// prepare the motors
-	init_motors();
-
-	// create a thread to handle draw screens and receive user input
-	// create a thread to handle motors
-	// create a thread to get the status of the motors/controller
+	// create a thread to handle draw curses screens and receive user input
+	// create a thread to get the status of the robot/IMUs
 	// create a thread to draw the opengl window
-	pthread_t userThreadID, motorThreadID, statusThreadID, openGLThreadID;
+	pthread_t userThreadID, statusThreadID, openGLThreadID;
 	pthread_attr_t userThreadAttr;
-	pthread_attr_t motorThreadAttr;
 	pthread_attr_t statusThreadAttr;
 	pthread_attr_t openGLThreadAttr;
 	pthread_attr_init(&userThreadAttr);
-	pthread_attr_init(&motorThreadAttr);
 	pthread_attr_init(&statusThreadAttr);
 	pthread_attr_init(&openGLThreadAttr);
 
@@ -118,7 +107,6 @@ int main(int argc, char **argv)
 	if (do_gl == TRUE)
 		pthread_create(&openGLThreadID, &openGLThreadAttr, draw_graphics, &key);
 
-	pthread_create(&motorThreadID, &motorThreadAttr, drive_motors, &key);
 	pthread_create(&statusThreadID, &statusThreadAttr, update_robot_status, &key);
 
 	// do other stuff here;
@@ -128,7 +116,6 @@ int main(int argc, char **argv)
 	if (do_curses == TRUE)
 		pthread_join(userThreadID, NULL);
 
-	pthread_join(motorThreadID, NULL);
 	pthread_join(statusThreadID, NULL);
 
 	exit(0);
@@ -161,17 +148,6 @@ void* draw_curses(void*){
 	} while ((keys != 'q') && (keys != 'Q'));
 
 	// received a q
-	pthread_exit(0);
-}
-
-
-void* drive_motors(void*){
-	// we've received this key. check to see if it requires movement
-	do{
-		usleep(20000); // run the motor
-
-	}while ((current_key != 'q') && (current_key != 'Q') && (quit_gl != TRUE));
-
 	pthread_exit(0);
 }
 
@@ -224,8 +200,6 @@ void* update_robot_status(void*){
 	pthread_exit(0);
 }
 
-void init_motors(void){
-}
 
 void* draw_graphics(void*){
 	robotGL glWin(do_fullscreen);
