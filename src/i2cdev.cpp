@@ -91,7 +91,7 @@ namespace samsRobot {
 		this->write(registerAddress);
 		unsigned char buffer[1];
 		if(::read(this->file, buffer, 1) != 1){
-			perror("U2C: Failed to read in the value. \n");
+			perror("I2C: Failed to read in the value. \n");
 			return 1;
 		}
 		return buffer[0];
