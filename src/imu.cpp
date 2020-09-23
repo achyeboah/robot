@@ -65,7 +65,9 @@ namespace samsRobot {
 		/* address this IMU */
 		if(this->i2caddress == 0x69){
 			this->pinAD0->setValue(HIGH);
+		}
 
+		if((this->sensor_type == imu::MPU6050) || (this->sensor_type == imu::MPU9250)){
 			if (this->enable_dlpf == true){
 				// low pass filtered to approx 94hz bandwidth (close enough to 100hz)
 				// this also makes sampling freq for temperature and gyro 1khz

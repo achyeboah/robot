@@ -186,15 +186,16 @@ void* update_robot_status(void*){
 		/* request from client is of the form 
 		* [i2caddress type pinGPIO] */
 
-		// send a message to read from imu on 6050
-		std::string cmsg("104 6050"); cmsg += (IMU_1_GPIO); cmsg += " ";
+		// send a message to read from imu on 6050 (0x68 = 104d)
+		std::string cmsg("104 6050 17 "); cmsg += (IMU_1_GPIO); cmsg += " ";
 		sc.send(cmsg);
 		std::string smsg = sc.receive(300);
 		std::cout << "Sent " << cmsg << ", received "<< smsg << std::endl;
 		str_to_imu_data(smsg, delim, theRobot.boom_data);
 
-		// send a message to read from imu on 9250 
-		cmsg.clear(); cmsg = "13 8963"; cmsg += (IMU_2_GPIO); cmsg += " ";
+		// send a message to read from imu on 9250 (0x68 = 104d)
+		
+		cmsg.clear(); cmsg = "13 8963 17 "; cmsg += (IMU_2_GPIO); cmsg += " ";
 		sc.send(cmsg);
 		smsg.clear();
 	        smsg = sc.receive(300);
